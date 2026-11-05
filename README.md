@@ -139,47 +139,7 @@ flowchart TD
 
 ---
 
-## 4. Team Ownership & Role Responsibilities
-
-The project is structured between two specialized engineering roles. Both streams develop in parallel using strict data contracts defined in `docs/contract.md`.
-
-```
-┌────────────────────────────────────────────────────────┐
-│                      Team of 2                         │
-├───────────────────────────┬────────────────────────────┤
-│  Role A (You)             │  Role B (Teammate)         │
-│  Agent & Trust Core       │  Data, Platform & Demo     │
-└───────────────────────────┴────────────────────────────┘
-```
-
-### Role A: Agent and Trust Core (Your Role)
-*Core mission: Build the reasoning engine, hallucination barriers, safety guardrails, and state machine.*
-
-- [ ] **State Machine & Types (`app/state.py`):** Define the shared `AlertState`, `ClaimItem`, and validation schemas.
-- [ ] **LangGraph Topology (`app/graph.py`):** Build graph nodes, conditional routing, redraft loops, and interrupt checkpoints.
-- [ ] **Deterministic Claim Check (`app/nodes/claim_check.py`):** Author the zero-LLM regex citation verification and numeric entity grounding engine.
-- [ ] **Skeptical Verifier Node (`app/nodes/verifier.py`):** Formulate the adversarial 2nd-line compliance auditor prompt and verification logic.
-- [ ] **Risk Router Node (`app/nodes/risk_router.py`):** Implement the deterministic business rules mapping cases to Tiers 1, 2, or 3.
-- [ ] **Prompt Engineering (`app/prompts/`):** Author structured prompts for typology classification, SAR drafting with source tags, and adversarial review.
-- [ ] **Resilience & Budgeting (`app/nodes/escalate.py`, `app/audit.py`):** Implement token/cost budgets, circuit breakers, and immutable audit logs.
-- [ ] **Chaos Engineering Suite (`eval/chaos_cases.py`):** Design adversarial tests for prompt injection in transaction memos, tool timeouts, and contradictory evidence.
-- [ ] **Core Unit Tests (`tests/test_claim_check.py`, `tests/test_risk_router.py`):** Build 100% deterministic unit tests for safety nodes.
-
-### Role B: Data, Platform, and Demo (Teammate's Role)
-*Core mission: Build the underlying enterprise ecosystem: data, retrieval, serving, analyst front-end, and metrics.*
-
-- [ ] **Synthetic Banking Dataset (`data/`):** Generate 30–50 realistic AML alerts, synthetic KYC profiles (`customers.csv`), transaction ledgers (`transactions.csv`), watchlist entries (`watchlist.csv`), and ground-truth labels (`labels.json`).
-- [ ] **Policy Documentation (`data/policies/`):** Author 5–8 realistic institutional AML policy manuals (Structuring thresholds, OFAC screening, High-value wire protocols).
-- [ ] **Evidence Tools (`app/tools/`):** Implement `customer_profile.py`, `transactions.py`, and `watchlist.py` (fuzzy matcher with Levenshtein/Jaro-Winkler). Ensure all tools return typed `ToolResult` and never throw uncaught exceptions.
-- [ ] **Enterprise RAG (`app/rag/`):** Implement ingestion (`ingest.py`) into ChromaDB and top-k context retrieval (`retrieve.py`).
-- [ ] **FastAPI Backend (`app/api.py`):** Expose REST endpoints for alert intake, running investigations, fetching state, and resuming human approvals.
-- [ ] **Streamlit Analyst Portal (`ui/app.py`):** Build an interactive UI displaying alert queues, risk tiers, source citations diffs, and 1-click or full-review approval actions.
-- [ ] **Quantitative Evaluation Harness (`eval/run_eval.py`, `eval/metrics.py`):** Run batch benchmarks measuring groundedness rate, decision accuracy against labels, latency, and cost per case.
-- [ ] **Containerization & Demo (`Dockerfile`, `docker-compose.yml`, Demo Video):** Package services for one-command startup and record the final demonstration walkthrough.
-
----
-
-## 5. What Makes This Solution Unique & Foolproof
+## 4. What Makes This Solution Unique & Foolproof
 
 1. **Sentence-Level Claim Ledger (Zero Hallucination Tolerance):**
    Unlike standard RAG systems that summarize text blindly, every sentence produced by the drafting LLM must carry an explicit source token (e.g., `[SRC:TX_01]`). The deterministic Python claim checker verifies citations before the text is shown to humans. If a claim lacks proof or invents facts, it is blocked automatically.
@@ -194,7 +154,7 @@ The project is structured between two specialized engineering roles. Both stream
 
 ---
 
-## 6. Repository Structure
+## 5. Repository Structure
 
 ```
 aml-alert-agent/
@@ -207,13 +167,13 @@ aml-alert-agent/
 │
 ├── app/                         # Core Application
 │   ├── __init__.py
-│   ├── api.py                   # FastAPI application endpoints [Role B]
-│   ├── audit.py                 # Structured audit logger and telemetry [Role A]
-│   ├── config.py                # Environment configuration [Shared]
-│   ├── graph.py                 # LangGraph state machine & edge wiring [Role A]
-│   ├── state.py                 # Pydantic schemas and typed graph state [Role A]
+│   ├── api.py                   # FastAPI application endpoints
+│   ├── audit.py                 # Structured audit logger and telemetry
+│   ├── config.py                # Environment configuration
+│   ├── graph.py                 # LangGraph state machine & edge wiring
+│   ├── state.py                 # Pydantic schemas and typed graph state
 │   │
-│   ├── nodes/                   # LangGraph Node Handlers [Role A]
+│   ├── nodes/                   # LangGraph Node Handlers
 │   │   ├── __init__.py
 │   │   ├── intake.py            # Input validation & PII tokenization
 │   │   ├── classify.py          # Typology classifier
@@ -227,23 +187,23 @@ aml-alert-agent/
 │   │   ├── finalize.py          # SAR package builder & persistence
 │   │   └── escalate.py          # Circuit breaker & escalation handler
 │   │
-│   ├── prompts/                 # Modular LLM Prompts [Role A]
+│   ├── prompts/                 # Modular LLM Prompts
 │   │   ├── classify.txt
 │   │   ├── draft_note.txt
 │   │   └── verifier.txt
 │   │
-│   ├── rag/                     # RAG Pipeline [Role B]
+│   ├── rag/                     # RAG Pipeline
 │   │   ├── __init__.py
 │   │   ├── ingest.py            # Vector database indexing
 │   │   └── retrieve.py          # Top-k vector retrieval
 │   │
-│   └── tools/                   # External Evidence Tools [Role B]
+│   └── tools/                   # External Evidence Tools
 │       ├── __init__.py
 │       ├── customer_profile.py  # KYC profile retrieval
 │       ├── transactions.py      # Core banking ledger & history
 │       └── watchlist.py         # OFAC/PEP fuzzy matching
 │
-├── data/                        # Synthetic Banking Data [Role B]
+├── data/                        # Synthetic Banking Data
 │   ├── alerts.json              # 30-50 synthetic alerts
 │   ├── customers.csv            # Synthetic customer KYC records
 │   ├── transactions.csv         # Synthetic transaction ledgers
@@ -251,84 +211,21 @@ aml-alert-agent/
 │   ├── labels.json              # Ground truth labels for evaluation
 │   └── policies/                # Institutional AML policy manuals
 │
-├── eval/                        # Evaluation & Chaos Framework [Role A & B]
-│   ├── chaos_cases.py           # Adversarial injection & timeout test cases [Role A]
-│   ├── metrics.py               # Groundedness, precision, and latency formulas [Role A]
-│   ├── run_eval.py              # Batch evaluation test runner [Role B]
+├── docs/                        # Architecture & Contracts
+│   └── contract.md              # State, tool, and API interface contracts
+│
+├── eval/                        # Evaluation & Chaos Framework
+│   ├── chaos_cases.py           # Adversarial injection & timeout test cases
+│   ├── metrics.py               # Groundedness, precision, and latency formulas
+│   ├── run_eval.py              # Batch evaluation test runner
 │   └── reports/                 # Output benchmark reports
 │
-├── tests/                       # Automated Test Suite [Role A & B]
-│   ├── test_api.py              # FastAPI endpoint tests [Role B]
-│   ├── test_claim_check.py      # Deterministic citation tests [Role A]
-│   ├── test_risk_router.py      # Risk routing logic tests [Role A]
-│   └── test_tools.py            # Tool output & failure shape tests [Role B]
+├── tests/                       # Automated Test Suite
+│   ├── test_api.py              # FastAPI endpoint tests
+│   ├── test_claim_check.py      # Deterministic citation tests
+│   ├── test_risk_router.py      # Risk routing logic tests
+│   └── test_tools.py            # Tool output & failure shape tests
 │
-└── ui/                          # Streamlit HITL Portal [Role B]
+└── ui/                          # Streamlit HITL Portal
     └── app.py                   # Compliance analyst interactive dashboard
 ```
-
----
-
-## 7. Getting Started
-
-### Prerequisites
-* Python 3.11+
-* Git
-* Virtual environment (recommended: `venv` or `conda`)
-* LLM API Key (OpenAI, Anthropic, or Google Gemini)
-
-### Quick Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/<your-org>/aml-alert-agent.git
-   cd aml-alert-agent
-   ```
-
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv .venv
-   # Windows:
-   .venv\Scripts\activate
-   # Linux/macOS:
-   source .venv/bin/activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure Environment Variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your LLM API keys and model choices
-   ```
-
-5. **Run the Automated Tests:**
-   ```bash
-   pytest tests/
-   ```
-
-6. **Start the FastAPI Backend:**
-   ```bash
-   uvicorn app.api:app --reload --port 8000
-   ```
-
-7. **Launch the Streamlit Human Review Portal:**
-   ```bash
-   streamlit run ui/app.py
-   ```
-
----
-
-## 8. Milestone Roadmap & Deliverables
-
-| Date | Milestone | Key Deliverables |
-| :--- | :--- | :--- |
-| **Nov 07** | **Contract & Mocks Complete** | `docs/contract.md` finalized; mock tools and synthetic state schema in place. |
-| **Nov 14** | **Core Flow Operational** | LangGraph state machine running end-to-end with mock tools; claim check and verifier passing tests. |
-| **Nov 21** | **Integration Milestone** | Real ChromaDB RAG, realistic synthetic data, FastAPI endpoints wired to LangGraph. |
-| **Nov 25** | **HITL & Chaos Suite** | Streamlit UI interactive approval working; chaos injection tests passing. |
-| **Nov 28** | **Benchmarking & Containerization** | Evaluation script generating metrics report; Docker Compose fully verified. |
-| **Dec 01** | **Final Delivery** | Live demo presentation, video walkthrough recorded, code frozen on GitHub. |
