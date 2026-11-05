@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+eval/reports/*
+!eval/reports/.gitkeep
+chroma_db/
+.venv/
