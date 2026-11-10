@@ -1,166 +1,670 @@
-"""LLM Client and Invocation Wrapper (Role A).
-Provides unified access to LLM providers (Gemini, OpenAI, Anthropic, or Mock).
-Tracks token metrics and handles automatic JSON parsing and graceful offline fallbacks.
+
+"""
+LLM Client and Invocation Wrapper (Role A).
+
+Supports:
+1. Deterministic mock responses for offline testing.
+2. STRUCTURING, SANCTIONS_MATCH and HIGH_VALUE_TRANSFER scenarios.
+3. Sentence-level [SRC:...] citations for Claim Check.
+4. Gemini and OpenAI providers.
+5. Automatic mock fallback if a live API call fails.
 """
 
 import json
 import logging
-from typing import Any, Dict, Optional, Tuple
-from app.audit import calculate_token_cost
+import re
+from typing import Optional, Tuple
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def mock_llm_response(prompt: str, json_mode: bool = False) -> str:
-    """Deterministic mock LLM generator for offline testing and demos without API keys."""
-    # 1. Classification prompts
-    if "typology" in prompt.lower() and json_mode:
-        if "sanct" in prompt.lower() or "ofac" in prompt.lower() or "watchlist" in prompt.lower():
-            return json.dumps({
-                "typology": "SANCTIONS_MATCH",
-                "confidence": 0.95,
-                "reasoning": "Alert indicates customer name fuzzy match against OFAC sanctions listing.",
-            })
-        elif "high_value" in prompt.lower() or "250000" in prompt.lower() or "escrow" in prompt.lower():
-            return json.dumps({
-                "typology": "HIGH_VALUE_TRANSFER",
-                "confidence": 0.92,
-                "reasoning": "Transaction amount of $250,000 exceeds standard customer profile threshold.",
-            })
-        else:
-            return json.dumps({
-                "typology": "STRUCTURING",
-                "confidence": 0.98,
-                "reasoning": "Multiple consecutive cash deposits below $10,000 threshold within a 72-hour window.",
-            })
+# ============================================================
+# SCENARIO DETECTION
+# ============================================================
 
-    # 2. Verifier prompts
-    if "skeptic" in prompt.lower() or "auditor" in prompt.lower() and json_mode:
-        if "tariq" in prompt.lower() or "ofac" in prompt.lower():
-            # For sanctions with 94.5% match, verifier agrees with escalation
+
+def detect_scenario(prompt: str) -> str:
+    """Identify the scenario using actual evidence identifiers."""
+
+    text = str(prompt).lower()
+
+    # High-value transfer
+    if any(x in text for x in [
+        "tx_9940",
+        "cust_3088_kyc",
+        "cust_3088_networth",
+    ]):
+        return "HIGH_VALUE_TRANSFER"
+
+    # Sanctions match
+    if any(x in text for x in [
+        "wl_hit_syn_001",
+        "wl_hit_ofac_01",
+        "tx_9105",
+        "cust_2055_kyc",
+    ]):
+        return "SANCTIONS_MATCH"
+
+    # Current structuring test fixture
+    if any(x in text for x in [
+        "tx_8801",
+        "cust_1049_kyc",
+        "cust-1049",
+        "tx_20011",
+        "cust_1001_kyc",
+        "cust-1001",
+    ]):
+        return "STRUCTURING"
+
+    return "UNKNOWN"
+
+def extract_evidence_source_ids(prompt: str) -> dict:
+    """
+    Extract actual evidence source IDs from the current prompt.
+    Never invent customer, transaction, policy or watchlist IDs.
+    """
+
+    source_pattern = re.compile(
+        r"\b(?:CUST|TX|POL|WL)_[A-Z0-9_]+\b",
+        re.IGNORECASE
+    )
+
+    matches = source_pattern.findall(str(prompt))
+
+    source_ids = list(dict.fromkeys(matches))
+
+    return {
+        "customer": [
+            sid for sid in source_ids
+            if sid.upper().startswith("CUST_")
+        ],
+        "transactions": [
+            sid for sid in source_ids
+            if sid.upper().startswith("TX_")
+        ],
+        "policy": [
+            sid for sid in source_ids
+            if sid.upper().startswith("POL_")
+        ],
+        "watchlist": [
+            sid for sid in source_ids
+            if sid.upper().startswith("WL_")
+        ]
+    }
+
+
+def make_source_citation(source_ids: list) -> str:
+    """Build a citation using only retrieved source IDs."""
+
+    unique_ids = list(dict.fromkeys(source_ids))
+
+    if not unique_ids:
+        return ""
+
+    return "[SRC:" + ", ".join(unique_ids) + "]"
+
+# ============================================================
+# MOCK LLM
+# ============================================================
+
+def mock_llm_response(
+    prompt: str,
+    json_mode: bool = False
+) -> str:
+
+    lower = str(prompt).lower()
+    scenario = detect_scenario(prompt)
+    sources = extract_evidence_source_ids(prompt)
+
+    # --------------------------------------------------------
+    # 1. CLASSIFICATION
+    # --------------------------------------------------------
+
+    if json_mode and "typology" in lower:
+
+        return json.dumps({
+            "typology": (
+                scenario if scenario != "UNKNOWN"
+                else "STRUCTURING"
+            ),
+            "confidence": 0.95,
+            "reasoning": (
+                "Classification based on supplied investigation evidence."
+            )
+        })
+
+    # --------------------------------------------------------
+    # 2. VERIFIER
+    # --------------------------------------------------------
+
+    if json_mode and (
+        "skeptic" in lower or "auditor" in lower
+    ):
+
+        if scenario == "SANCTIONS_MATCH":
+
             return json.dumps({
                 "agreed": True,
-                "skeptic_critique": "The 94.5% fuzzy match against the OFAC SDN list is a high-confidence match requiring strict-liability escalation.",
+                "skeptic_critique": (
+                    "The potential sanctions screening match must not "
+                    "be closed by Level 1 and requires senior compliance "
+                    "review. The screening result must be described "
+                    "according to its actual list type and identity "
+                    "attributes."
+                ),
                 "flaws_found": [],
-                "recommended_action": "ESCALATE_TO_SENIOR",
+                "recommended_action": "ESCALATE_TO_SENIOR"
             })
-        elif "elena" in prompt.lower() or "250000" in prompt.lower():
-            # For high-value escrow with documented justification
+
+        if scenario == "HIGH_VALUE_TRANSFER":
+
             return json.dumps({
                 "agreed": True,
-                "skeptic_critique": "Commercial title escrow documentation is present, and customer neurosurgeon income supports the wire.",
+                "skeptic_critique": (
+                    "The transaction is documented in the supplied "
+                    "evidence. Supporting commercial documentation "
+                    "and source of funds should be reviewed before "
+                    "final disposition."
+                ),
                 "flaws_found": [],
-                "recommended_action": "PROCEED",
+                "recommended_action": "REVISE"
             })
-        else:
-            # For structuring
+
+        if scenario == "STRUCTURING":
+
             return json.dumps({
                 "agreed": True,
-                "skeptic_critique": "Case narrative correctly identifies structuring evasion under 31 CFR § 1010.311 with 4 sub-threshold cash deposits.",
+                "skeptic_critique": (
+                    "The four posted cash deposits and their aggregate "
+                    "value are supported by transaction records. "
+                    "The timing and pattern warrant further assessment "
+                    "under the retrieved structuring policy."
+                ),
                 "flaws_found": [],
-                "recommended_action": "PROCEED",
+                "recommended_action": "PROCEED"
             })
 
-    # 3. Draft Note prompts
-    if "draft case narrative" in prompt.lower() or "fincen 5 ws" in prompt.lower():
-        if "tariq" in prompt.lower() or "ofac" in prompt.lower() or "c2055" in prompt.lower():
-            return (
-                "Customer Tariq Al-Mansoor is a Syrian national operating an import-export trading enterprise [SRC:CUST_2055_KYC, CUST_2055_NATIONALITY]. "
-                "On 2026-11-01, an outgoing wire transfer of $15,000 was executed to Levant Maritime Logistics LLC with memo parts logistics [SRC:TX_9105]. "
-                "Automated screening identified a 94.5% fuzzy match against OFAC Specially Designated Nationals entity Tariq Al-Mansour [SRC:WL_HIT_OFAC_01]. "
-                "Under institutional sanctions policy and OFAC strict liability regulations, Level 1 automated closure is prohibited for matches exceeding 80% [SRC:POL_SANCT_01]. "
-                "Recommendation: Escalate case immediately to Designated Sanctions Officer for asset freezing review [SRC:POL_SANCT_01]."
-            )
-        elif "elena" in prompt.lower() or "c3088" in prompt.lower() or "250000" in prompt.lower():
-            return (
-                "Customer Dr. Elena Rostova is employed as Chief of Neurosurgery with an annual income of $450,000 [SRC:CUST_3088_KYC, CUST_3088_NETWORTH]. "
-                "On 2026-10-25, an outgoing wire transfer of $250,000 was initiated to First American Title & Escrow Co for commercial purchase escrow [SRC:TX_9940]. "
-                "Customer profile confirms verified professional net worth supporting the transaction volume without unusual structuring [SRC:CUST_3088_NETWORTH]. "
-                "Watchlist screening identified no hits or adverse media for this individual [SRC:WL_CLEAN_3088]. "
-                "Policy allows closure of high-value wires when commercial purchase documentation is present and net worth is established [SRC:POL_HVT_01]. "
-                "Recommendation: Close alert as verified false positive [SRC:POL_HVT_01]."
-            )
-        else:
-            return (
-                "Customer Alex Rivera is employed as a Retail Cashier with a stated annual income of $36,000 [SRC:CUST_1049_KYC, CUST_1049_OCCUPATION]. "
-                "Between 2026-10-12 and 2026-10-14, four cash deposits totaling $38,100 were executed in sub-threshold amounts [SRC:TX_8801, TX_8802, TX_8803, TX_8804]. "
-                "The repeated cash deposits below $10,000 with no documented commercial origin indicate potential structuring to evade CTR requirements [SRC:POL_STRUCT_01]. "
-                "No watchlist or sanctions matches were identified for this customer [SRC:WL_CLEAN_1049]. "
-                "Recommendation: File Suspicious Activity Report (SAR) due to suspected structuring [SRC:POL_STRUCT_01]."
-            )
+        return json.dumps({
+            "agreed": False,
+            "skeptic_critique": (
+                "The scenario could not be identified from "
+                "the available evidence."
+            ),
+            "flaws_found": [
+                "Manual verification is required."
+            ],
+            "recommended_action": "ESCALATE_TO_SENIOR"
+        })
 
-    return "Alert investigated and documented [SRC:POL_STRUCT_01]."
+    # --------------------------------------------------------
+    # 3. DRAFT NOTE
+    # --------------------------------------------------------
 
+    is_draft_request = (
+        "draft case narrative" in lower
+        or "fincen 5 ws" in lower
+        or "customer_evidence" in lower
+        or "transaction_evidence" in lower
+    )
+
+    if is_draft_request:
+
+        # ====================================================
+        # STRUCTURING
+        # ====================================================
+
+            if scenario == "STRUCTURING":
+
+                sources = extract_evidence_source_ids(prompt)
+
+            customer_sources = sources["customer"]
+            transaction_sources = [
+                sid for sid in sources["transactions"]
+                if sid.upper() != "TX_ID"
+            ]
+            policy_sources = [
+                sid for sid in sources["policy"]
+                if sid.upper() != "POL_STRUCT"
+            ]
+            watchlist_sources = sources["watchlist"]
+
+            narrative = []
+
+            if customer_sources:
+                narrative.append(
+                    "WHO: Customer profile records were retrieved "
+                    "for the customer under investigation "
+                    + make_source_citation(customer_sources) + "."
+                )
+
+            if transaction_sources:
+                narrative.append(
+                    "WHAT: Four cash deposit transaction records "
+                    "were retrieved for examination "
+                    + make_source_citation(transaction_sources) + "."
+                )
+
+                narrative.append(
+                    "WHEN: The transaction records contain the "
+                    "documented dates of the cash deposits "
+                    + make_source_citation(transaction_sources) + "."
+                )
+
+                narrative.append(
+                    "WHERE: The transaction memos identify branch "
+                    "cash deposit locations, including ATM and teller "
+                    "references "
+                    + make_source_citation(transaction_sources) + "."
+                )
+
+            if policy_sources:
+                narrative.append(
+                    "WHY: The retrieved structuring policy provides "
+                    "the institutional framework for assessing "
+                    "multiple cash deposits and potential reporting "
+                    "evasion "
+                    + make_source_citation(policy_sources) + "."
+                )
+
+            if watchlist_sources:
+                narrative.append(
+                    "The watchlist screening evidence is recorded "
+                    "separately and does not establish a confirmed "
+                    "regulatory-list match "
+                    + make_source_citation(watchlist_sources) + "."
+                )
+
+            if not narrative:
+                logger.error(
+                    "Structuring narrative could not be generated: "
+                    "no valid evidence sources were extracted."
+                )
+                return (
+                    "Investigation narrative unavailable pending "
+                    "manual review."
+                )
+
+            return "\n".join(narrative)
+
+
+        # ====================================================
+        # SANCTIONS MATCH
+        # ====================================================
+
+    if scenario == "SANCTIONS_MATCH":
+
+                    if "wl_hit_syn_001" in lower:
+
+                        return "\n".join([
+
+                    (
+                        "WHO: The investigation concerns customer "
+                        "CUST-2055, whose customer profile was "
+                        "retrieved for review [SRC:CUST_2055_KYC]."
+                    ),
+
+                    (
+                        "WHAT: An outgoing wire transfer of $15,000 "
+                        "was recorded under transaction TX-9105 "
+                        "[SRC:TX_9105]."
+                    ),
+
+                    (
+                        "WHEN: The transaction was recorded on "
+                        "2026-11-01 [SRC:TX_9105]."
+                    ),
+
+                    (
+                        "WHERE: The transfer was directed to "
+                        "Levant Maritime Logistics LLC and the "
+                        "transaction memo states parts logistics "
+                        "[SRC:TX_9105]."
+                    ),
+
+                    (
+                        "WHY: Screening identified a potential match "
+                        "on a synthetic internal restricted list, "
+                        "with a match score of 98.8%, name similarity "
+                        "of 93.8%, a date-of-birth match and no "
+                        "country match [SRC:WL_HIT_SYN_001]."
+                    ),
+
+                    (
+                        "The screening result represents a potential "
+                        "internal-list match and does not establish "
+                        "a confirmed OFAC SDN match "
+                        "[SRC:WL_HIT_SYN_001]."
+                    ),
+
+                    (
+                        "The retrieved sanctions policy prohibits "
+                        "automated closure for matches exceeding "
+                        "its documented 80% threshold "
+                        "[SRC:POL_SANCT_01]."
+                    ),
+
+                    (
+                        "The recommended disposition is ESCALATE_L2 "
+                        "and referral to the designated sanctions "
+                        "officer for further review "
+                        "[SRC:POL_SANCT_01]."
+                    )
+
+                ])
+
+    return "\n".join([
+
+                (
+                    "WHO: The investigation concerns customer "
+                    "CUST-2055 [SRC:CUST_2055_KYC]."
+                ),
+
+                (
+                    "WHAT: An outgoing wire transfer of $15,000 "
+                    "was recorded under transaction TX-9105 "
+                    "[SRC:TX_9105]."
+                ),
+
+                (
+                    "WHEN: The transaction was recorded on "
+                    "2026-11-01 [SRC:TX_9105]."
+                ),
+
+                (
+                    "WHERE: The transfer was directed to "
+                    "Levant Maritime Logistics LLC [SRC:TX_9105]."
+                ),
+
+                (
+                    "WHY: The retrieved screening evidence identifies "
+                    "a potential sanctions-list match requiring "
+                    "human verification [SRC:WL_HIT_OFAC_01]."
+                ),
+
+                (
+                    "The applicable sanctions policy prohibits "
+                    "automated closure above its documented "
+                    "80% match threshold [SRC:POL_SANCT_01]."
+                ),
+
+                (
+                    "The recommended disposition is ESCALATE_L2 "
+                    "under the sanctions policy [SRC:POL_SANCT_01]."
+                )
+
+            ])
+
+        # ====================================================
+        # HIGH VALUE TRANSFER
+        # ====================================================
+
+    if scenario == "HIGH_VALUE_TRANSFER":
+
+                    return "\n".join([
+
+                (
+                    "WHO: The retrieved customer profile identifies "
+                    "Dr. Elena Rostova as Chief of Neurosurgery "
+                    "[SRC:CUST_3088_KYC]."
+                ),
+
+                (
+                    "WHAT: An outgoing wire transfer of $250,000 "
+                    "was initiated to First American Title and "
+                    "Escrow Co for commercial purchase escrow "
+                    "[SRC:TX_9940]."
+                ),
+
+                (
+                    "WHEN: The transaction was recorded on "
+                    "2026-10-25 [SRC:TX_9940]."
+                ),
+
+                (
+                    "WHERE: The transaction was directed to "
+                    "First American Title and Escrow Co "
+                    "[SRC:TX_9940]."
+                ),
+
+                (
+                    "WHY: The retrieved customer profile contains "
+                    "professional net-worth information relevant "
+                    "to assessing the transaction volume "
+                    "[SRC:CUST_3088_NETWORTH]."
+                ),
+
+                (
+                    "The institutional high-value transaction policy "
+                    "requires review of the customer profile and "
+                    "supporting transaction rationale "
+                    "[SRC:POL_HVT_01]."
+                ),
+
+                (
+                    "The recommended disposition is REQUEST_RFI "
+                    "under the institutional high-value transaction "
+                    "policy [SRC:POL_HVT_01]."
+                ),
+
+                (
+                    "Supporting commercial purchase documentation "
+                    "should be obtained and reviewed before "
+                    "determining the final disposition "
+                    "[SRC:POL_HVT_01]."
+                )
+
+            ])
+
+    # --------------------------------------------------------
+    # 4. UNKNOWN SCENARIO
+    # --------------------------------------------------------
+
+    logger.warning(
+        "Mock LLM could not identify a supported scenario."
+    )
+
+    if json_mode:
+
+        return json.dumps({
+            "agreed": False,
+            "skeptic_critique": (
+                "The scenario could not be identified from "
+                "the supplied evidence."
+            ),
+            "flaws_found": [
+                "Manual review is required."
+            ],
+            "recommended_action": "ESCALATE_TO_SENIOR"
+        })
+
+    return (
+        "The investigation scenario could not be identified "
+        "from the supplied evidence; manual review is required."
+    )
+
+
+# ============================================================
+# TOKEN ESTIMATION
+# ============================================================
+
+def estimate_tokens(text: str) -> int:
+
+    return max(1, len(str(text)) // 4)
+
+
+# ============================================================
+# MAIN LLM INVOCATION
+# ============================================================
 
 def call_llm(
     prompt: str,
     system_prompt: Optional[str] = None,
     json_mode: bool = False,
 ) -> Tuple[str, int, int]:
-    """Invokes the configured LLM (or mock fallback).
-    Returns (response_text, input_tokens_estimate, output_tokens_estimate).
-    """
-    provider = settings.LLM_PROVIDER
+
+    provider = str(settings.LLM_PROVIDER).lower()
     api_key = settings.LLM_API_KEY
 
-    # If mock mode is explicitly chosen or no API key is provided, use deterministic mock
-    if provider == "mock" or not api_key:
-        response_text = mock_llm_response(prompt, json_mode=json_mode)
-        # Rough token approximation (1 token ~= 4 chars)
-        input_tokens = len(prompt) // 4
-        output_tokens = len(response_text) // 4
-        return response_text, input_tokens, output_tokens
+    # --------------------------------------------------------
+    # MOCK MODE
+    # --------------------------------------------------------
 
-    # Live API invocation for Gemini or OpenAI
+    if provider == "mock" or not api_key:
+
+        response_text = mock_llm_response(
+            prompt,
+            json_mode=json_mode
+        )
+
+        return (
+            response_text,
+            estimate_tokens(prompt),
+            estimate_tokens(response_text)
+        )
+
+    # --------------------------------------------------------
+    # GEMINI
+    # --------------------------------------------------------
+
     try:
+
         if provider == "gemini":
+
             from google import genai
+
             client = genai.Client(api_key=api_key)
+
             config_args = {}
+
             if json_mode:
                 config_args["response_mime_type"] = "application/json"
+
             if system_prompt:
                 config_args["system_instruction"] = system_prompt
 
             response = client.models.generate_content(
                 model=settings.LLM_MODEL,
                 contents=prompt,
-                config=config_args if config_args else None,
+                config=config_args or None
             )
-            text = response.text or ""
-            in_tok = getattr(response.usage_metadata, "prompt_token_count", len(prompt) // 4)
-            out_tok = getattr(response.usage_metadata, "candidates_token_count", len(text) // 4)
-            return text, in_tok, out_tok
 
-        elif provider == "openai":
+            response_text = response.text or ""
+
+            usage = getattr(
+                response,
+                "usage_metadata",
+                None
+            )
+
+            input_tokens = getattr(
+                usage,
+                "prompt_token_count",
+                estimate_tokens(prompt)
+            )
+
+            output_tokens = getattr(
+                usage,
+                "candidates_token_count",
+                estimate_tokens(response_text)
+            )
+
+            return (
+                response_text,
+                input_tokens,
+                output_tokens
+            )
+
+        # ----------------------------------------------------
+        # OPENAI
+        # ----------------------------------------------------
+
+        if provider == "openai":
+
             from openai import OpenAI
+
             client = OpenAI(api_key=api_key)
+
             messages = []
+
             if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-            messages.append({"role": "user", "content": prompt})
+
+                messages.append({
+                    "role": "system",
+                    "content": system_prompt
+                })
+
+            messages.append({
+                "role": "user",
+                "content": prompt
+            })
 
             kwargs = {
                 "model": settings.LLM_MODEL,
                 "messages": messages,
-                "temperature": settings.LLM_TEMPERATURE,
+                "temperature": settings.LLM_TEMPERATURE
             }
-            if json_mode:
-                kwargs["response_format"] = {"type": "json_object"}
 
-            response = client.chat.completions.create(**kwargs)
-            text = response.choices[0].message.content or ""
-            in_tok = response.usage.prompt_tokens if response.usage else len(prompt) // 4
-            out_tok = response.usage.completion_tokens if response.usage else len(text) // 4
-            return text, in_tok, out_tok
+            if json_mode:
+
+                kwargs["response_format"] = {
+                    "type": "json_object"
+                }
+
+            response = client.chat.completions.create(
+                **kwargs
+            )
+
+            response_text = (
+                response.choices[0].message.content or ""
+            )
+
+            usage = response.usage
+
+            input_tokens = (
+                usage.prompt_tokens
+                if usage
+                else estimate_tokens(prompt)
+            )
+
+            output_tokens = (
+                usage.completion_tokens
+                if usage
+                else estimate_tokens(response_text)
+            )
+
+            return (
+                response_text,
+                input_tokens,
+                output_tokens
+            )
+
+        logger.warning(
+            "Unknown LLM provider '%s'. Using mock fallback.",
+            provider
+        )
 
     except Exception as exc:
-        logger.warning("Live LLM call to %s failed (%s). Falling back to deterministic mock.", provider, exc)
-        fallback = mock_llm_response(prompt, json_mode=json_mode)
-        return fallback, len(prompt) // 4, len(fallback) // 4
 
-    # Default fallback
-    fallback = mock_llm_response(prompt, json_mode=json_mode)
-    return fallback, len(prompt) // 4, len(fallback) // 4
+        logger.warning(
+            "Live LLM invocation failed for %s: %s. "
+            "Using deterministic mock fallback.",
+            provider,
+            exc
+        )
 
+    # --------------------------------------------------------
+    # FALLBACK
+    # --------------------------------------------------------
+
+    fallback_response = mock_llm_response(
+        prompt,
+        json_mode=json_mode
+    )
+
+    return (
+        fallback_response,
+        estimate_tokens(prompt),
+        estimate_tokens(fallback_response)
+    )

@@ -60,7 +60,7 @@ MOCK_STRUCTURING_EVIDENCE: Dict[str, Dict[str, Any]] = {
             "kyc_risk_rating": "LOW",
             "account_opened_date": "2024-03-15",
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
     "transactions": ToolResult(
         tool_name="transactions",
         status=ToolStatus.SUCCESS,
@@ -101,7 +101,7 @@ MOCK_STRUCTURING_EVIDENCE: Dict[str, Dict[str, Any]] = {
                 },
             ],
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
     "watchlist": ToolResult(
         tool_name="watchlist",
         status=ToolStatus.SUCCESS,
@@ -113,7 +113,7 @@ MOCK_STRUCTURING_EVIDENCE: Dict[str, Dict[str, Any]] = {
             "highest_similarity_score": 12.0,
             "matched_entries": [],
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
 }
 
 VALID_STRUCTURING_DRAFT = (
@@ -166,7 +166,7 @@ MOCK_SANCTIONS_EVIDENCE: Dict[str, Dict[str, Any]] = {
             "occupation": "Import Export General Trading",
             "kyc_risk_rating": "HIGH",
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
     "transactions": ToolResult(
         tool_name="transactions",
         status=ToolStatus.SUCCESS,
@@ -184,7 +184,7 @@ MOCK_SANCTIONS_EVIDENCE: Dict[str, Dict[str, Any]] = {
                 }
             ],
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
     "watchlist": ToolResult(
         tool_name="watchlist",
         status=ToolStatus.SUCCESS,
@@ -205,7 +205,7 @@ MOCK_SANCTIONS_EVIDENCE: Dict[str, Dict[str, Any]] = {
                 }
             ],
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
 }
 
 
@@ -248,7 +248,7 @@ MOCK_HIGH_VALUE_EVIDENCE: Dict[str, Dict[str, Any]] = {
             "annual_income": 450000.0,
             "kyc_risk_rating": "LOW",
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
     "transactions": ToolResult(
         tool_name="transactions",
         status=ToolStatus.SUCCESS,
@@ -266,7 +266,7 @@ MOCK_HIGH_VALUE_EVIDENCE: Dict[str, Dict[str, Any]] = {
                 }
             ],
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
     "watchlist": ToolResult(
         tool_name="watchlist",
         status=ToolStatus.SUCCESS,
@@ -278,7 +278,7 @@ MOCK_HIGH_VALUE_EVIDENCE: Dict[str, Dict[str, Any]] = {
             "highest_similarity_score": 8.0,
             "matched_entries": [],
         },
-    ).model_dump(),
+    ).model_dump(mode="json"),
 }
 
 

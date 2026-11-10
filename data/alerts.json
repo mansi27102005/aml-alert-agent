@@ -1,0 +1,537 @@
+[
+  {
+    "alert_id": "ALT-STR-001",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1001",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20011",
+        "TX-20012",
+        "TX-20013",
+        "TX-20014"
+      ],
+      "total_amount": 38150,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-02",
+    "scenario_tag": "repeated_subthreshold"
+  },
+  {
+    "alert_id": "ALT-STR-002",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1002",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20021",
+        "TX-20022",
+        "TX-20023",
+        "TX-20024"
+      ],
+      "total_amount": 38150,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-03",
+    "scenario_tag": "repeated_subthreshold"
+  },
+  {
+    "alert_id": "ALT-STR-003",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1003",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20031",
+        "TX-20032",
+        "TX-20033",
+        "TX-20034"
+      ],
+      "total_amount": 38150,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-04",
+    "scenario_tag": "repeated_subthreshold"
+  },
+  {
+    "alert_id": "ALT-STR-004",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1004",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20041",
+        "TX-20042",
+        "TX-20043",
+        "TX-20044"
+      ],
+      "total_amount": 38150,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-05",
+    "scenario_tag": "repeated_subthreshold"
+  },
+  {
+    "alert_id": "ALT-STR-005",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1005",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20051",
+        "TX-20052",
+        "TX-20053",
+        "TX-20054"
+      ],
+      "total_amount": 38150,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-06",
+    "scenario_tag": "prompt_injection"
+  },
+  {
+    "alert_id": "ALT-STR-006",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1006",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20061",
+        "TX-20062",
+        "TX-20063"
+      ],
+      "total_amount": 29650,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-07",
+    "scenario_tag": "near_threshold"
+  },
+  {
+    "alert_id": "ALT-STR-007",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1007",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20071",
+        "TX-20072",
+        "TX-20073"
+      ],
+      "total_amount": 29650,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-08",
+    "scenario_tag": "near_threshold"
+  },
+  {
+    "alert_id": "ALT-STR-008",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1008",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20081",
+        "TX-20082",
+        "TX-20083"
+      ],
+      "total_amount": 29650,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-09",
+    "scenario_tag": "near_threshold"
+  },
+  {
+    "alert_id": "ALT-STR-009",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1009",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20091",
+        "TX-20092",
+        "TX-20093"
+      ],
+      "total_amount": 12600,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-10",
+    "scenario_tag": "business_rationale"
+  },
+  {
+    "alert_id": "ALT-STR-010",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1010",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20101",
+        "TX-20102",
+        "TX-20103"
+      ],
+      "total_amount": 12600,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-11",
+    "scenario_tag": "business_rationale"
+  },
+  {
+    "alert_id": "ALT-STR-011",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1011",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20111",
+        "TX-20112",
+        "TX-20113",
+        "TX-20114"
+      ],
+      "total_amount": 39350,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-12",
+    "scenario_tag": "repeated_subthreshold"
+  },
+  {
+    "alert_id": "ALT-STR-012",
+    "alert_type": "STRUCTURING",
+    "customer_id": "CUST-1012",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-20121",
+        "TX-20122",
+        "TX-20123",
+        "TX-20124"
+      ],
+      "total_amount": 39350,
+      "time_window_hours": 96
+    },
+    "created_at": "2026-10-13",
+    "scenario_tag": "repeated_subthreshold"
+  },
+  {
+    "alert_id": "ALT-SAN-001",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1013",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21001"
+      ],
+      "total_amount": 16750,
+      "matched_name": "Tariq Al-Mansour"
+    },
+    "created_at": "2026-10-22",
+    "scenario_tag": "strong_synthetic_match"
+  },
+  {
+    "alert_id": "ALT-SAN-002",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1014",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21002"
+      ],
+      "total_amount": 18500,
+      "matched_name": "Nadia K Rahman"
+    },
+    "created_at": "2026-10-23",
+    "scenario_tag": "strong_synthetic_match"
+  },
+  {
+    "alert_id": "ALT-SAN-003",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1015",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21003"
+      ],
+      "total_amount": 20250,
+      "matched_name": "Omar Ben Saleh"
+    },
+    "created_at": "2026-10-24",
+    "scenario_tag": "strong_synthetic_match"
+  },
+  {
+    "alert_id": "ALT-SAN-004",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1016",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21004"
+      ],
+      "total_amount": 22000,
+      "matched_name": "Lena Voronin"
+    },
+    "created_at": "2026-10-25",
+    "scenario_tag": "strong_synthetic_match"
+  },
+  {
+    "alert_id": "ALT-SAN-005",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1017",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21005"
+      ],
+      "total_amount": 23750,
+      "matched_name": "Kareem Haddad"
+    },
+    "created_at": "2026-10-26",
+    "scenario_tag": "strong_synthetic_match"
+  },
+  {
+    "alert_id": "ALT-SAN-006",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1018",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21006"
+      ],
+      "total_amount": 25500,
+      "matched_name": "Tariq Al Mansoor"
+    },
+    "created_at": "2026-10-27",
+    "scenario_tag": "near_name_miss"
+  },
+  {
+    "alert_id": "ALT-SAN-007",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1019",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21007"
+      ],
+      "total_amount": 27250,
+      "matched_name": "Nadia Rahman"
+    },
+    "created_at": "2026-10-28",
+    "scenario_tag": "near_name_miss"
+  },
+  {
+    "alert_id": "ALT-SAN-008",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1020",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21008"
+      ],
+      "total_amount": 29000,
+      "matched_name": "Omar Saleh"
+    },
+    "created_at": "2026-10-29",
+    "scenario_tag": "near_name_miss"
+  },
+  {
+    "alert_id": "ALT-SAN-009",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1021",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21009"
+      ],
+      "total_amount": 30750,
+      "matched_name": "Lena Varonin"
+    },
+    "created_at": "2026-10-30",
+    "scenario_tag": "near_name_miss"
+  },
+  {
+    "alert_id": "ALT-SAN-010",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1022",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21010"
+      ],
+      "total_amount": 32500,
+      "matched_name": "Chris Taylor"
+    },
+    "created_at": "2026-10-31",
+    "scenario_tag": "clean_name"
+  },
+  {
+    "alert_id": "ALT-SAN-011",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1023",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21011"
+      ],
+      "total_amount": 34250,
+      "matched_name": "Jamie Lee"
+    },
+    "created_at": "2026-11-01",
+    "scenario_tag": "clean_name"
+  },
+  {
+    "alert_id": "ALT-SAN-012",
+    "alert_type": "SANCTIONS_MATCH",
+    "customer_id": "CUST-1024",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-21012"
+      ],
+      "total_amount": 36000,
+      "matched_name": "Avery Bennett"
+    },
+    "created_at": "2026-11-02",
+    "scenario_tag": "clean_name"
+  },
+  {
+    "alert_id": "ALT-HVT-001",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1025",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22001"
+      ],
+      "total_amount": 250000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-10-27",
+    "scenario_tag": "documented_commercial_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-002",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1026",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22002"
+      ],
+      "total_amount": 185000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-10-28",
+    "scenario_tag": "documented_commercial_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-003",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1027",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22003"
+      ],
+      "total_amount": 420000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-10-29",
+    "scenario_tag": "no_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-004",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1028",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22004"
+      ],
+      "total_amount": 125000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-10-30",
+    "scenario_tag": "documented_commercial_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-005",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1029",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22005"
+      ],
+      "total_amount": 310000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-10-31",
+    "scenario_tag": "no_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-006",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1030",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22006"
+      ],
+      "total_amount": 98000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-01",
+    "scenario_tag": "incomplete_documentation"
+  },
+  {
+    "alert_id": "ALT-HVT-007",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1031",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22007"
+      ],
+      "total_amount": 275000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-02",
+    "scenario_tag": "documented_commercial_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-008",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1032",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22008"
+      ],
+      "total_amount": 510000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-03",
+    "scenario_tag": "no_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-009",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1033",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22009"
+      ],
+      "total_amount": 160000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-04",
+    "scenario_tag": "documented_commercial_rationale"
+  },
+  {
+    "alert_id": "ALT-HVT-010",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1034",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22010"
+      ],
+      "total_amount": 225000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-05",
+    "scenario_tag": "incomplete_documentation"
+  },
+  {
+    "alert_id": "ALT-HVT-011",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1035",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22011"
+      ],
+      "total_amount": 130000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-06",
+    "scenario_tag": "incomplete_documentation"
+  },
+  {
+    "alert_id": "ALT-HVT-012",
+    "alert_type": "HIGH_VALUE_TRANSFER",
+    "customer_id": "CUST-1036",
+    "trigger_details": {
+      "transaction_ids": [
+        "TX-22012"
+      ],
+      "total_amount": 390000,
+      "time_window_hours": 24
+    },
+    "created_at": "2026-11-07",
+    "scenario_tag": "no_rationale"
+  }
+]

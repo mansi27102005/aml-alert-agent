@@ -24,8 +24,36 @@ def test_graph_e2e_structuring_workflow():
     payload = dict(MOCK_STRUCTURING_PAYLOAD)
     payload["alert_id"] = "ALT-TEST-STR-001"
 
-    # 1. Run investigation up to HITL pause
+# 1. Run investigation up to HITL pause
     paused_state = run_investigation(payload, thread_id="ALT-TEST-STR-001")
+
+    print("\n========== FAILED CLAIMS ONLY ==========")
+
+    print("CLAIM CHECK PASSED:",
+        paused_state.get("claim_check_passed"))
+
+    print("REDRAFT COUNT:",
+        paused_state.get("redraft_count"))
+
+    for claim in paused_state.get("claims", []):
+        if not claim.get("is_valid", True):
+            print("\nFAILED SENTENCE:")
+            print(claim.get("sentence"))
+
+            print("ERROR:")
+            print(claim.get("validation_error"))
+
+            print("CITATIONS:")
+            print(claim.get("cited_source_ids"))
+
+    print("\n========== CLAIM CHECK AUDIT ==========")
+
+    for event in reversed(paused_state.get("audit_log", [])):
+        if event.get("node") == "claim_check":
+            print(event)
+            break
+
+    print("\n========================================")
 
     assert paused_state["alert_id"] == "ALT-TEST-STR-001"
     assert paused_state["alert_type"] == "STRUCTURING"
@@ -64,7 +92,7 @@ def test_graph_escalates_on_invalid_intake():
     # Graph without human interrupt to test full escalation path directly
     graph = build_aml_graph(enable_interrupt=False)
     bad_payload = {"alert_id": "", "customer_id": ""}
-    
+
     result = graph.invoke(bad_payload, config={"configurable": {"thread_id": "ALT-BAD-001"}})
 
     assert result["status"] == InvestigationStatus.ESCALATED.value

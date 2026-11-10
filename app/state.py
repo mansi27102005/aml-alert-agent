@@ -89,7 +89,7 @@ class AlertState(TypedDict):
     # Verification & Risk Routing (Role A)
     verifier_agreed: bool
     verifier_notes: str
-    risk_tier: ReviewTier
+    risk_tier: str
     
     # Human Review (HITL)
     human_approved: Optional[bool]
@@ -127,7 +127,7 @@ def create_initial_state(alert_payload: Dict[str, Any]) -> AlertState:
         "redraft_count": 0,
         "verifier_agreed": False,
         "verifier_notes": "",
-        "risk_tier": ReviewTier.TIER_2_STANDARD,
+        "risk_tier": ReviewTier.TIER_2_STANDARD.value,
         "human_approved": None,
         "human_edits": None,
         "human_notes": None,

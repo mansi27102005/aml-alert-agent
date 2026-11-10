@@ -24,7 +24,6 @@ from app.nodes import (
 )
 from app.state import AlertState, InvestigationStatus, create_initial_state
 
-
 # ============================================================================
 # CONDITIONAL ROUTING FUNCTIONS (DETERMINISTIC CODE)
 # ============================================================================
@@ -106,14 +105,17 @@ def build_aml_graph(checkpointer: Optional[Any] = None, enable_interrupt: bool =
     workflow.add_edge("finalize", END)
 
     # 5. Compilation with Persistence
+
     memory = checkpointer if checkpointer is not None else MemorySaver()
+
     interrupts = ["human_approval"] if enable_interrupt else []
 
     app = workflow.compile(
-        checkpointer=memory,
-        interrupt_before=interrupts,
-    )
+       checkpointer=memory,
+       interrupt_after=interrupts,
+   )
     return app
+
 
 
 # Singleton compiled graph instance

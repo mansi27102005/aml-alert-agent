@@ -1,0 +1,182 @@
+[
+  {
+    "alert_id": "ALT-STR-001",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-002",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-003",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-004",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-005",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-006",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-007",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-008",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-009",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-010",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-011",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-STR-012",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome for evaluation; analyst approval remains mandatory."
+  },
+  {
+    "alert_id": "ALT-SAN-001",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-002",
+    "expected_disposition": "ESCALATE_L2",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-003",
+    "expected_disposition": "ESCALATE_L2",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-004",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-005",
+    "expected_disposition": "ESCALATE_L2",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-006",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-007",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-008",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-009",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-010",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-011",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-SAN-012",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Disposition is a synthetic evaluation label, not a legal determination."
+  },
+  {
+    "alert_id": "ALT-HVT-001",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-002",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-003",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-004",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-005",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-006",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-007",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-008",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-009",
+    "expected_disposition": "CLOSE_FALSE_POSITIVE",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-010",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-011",
+    "expected_disposition": "REQUEST_RFI",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  },
+  {
+    "alert_id": "ALT-HVT-012",
+    "expected_disposition": "FILE_SAR",
+    "rationale": "Synthetic expected outcome; review supporting evidence before disposition."
+  }
+]

@@ -7,3 +7,4 @@ streamlit
 chromadb
 pytest
 python-dotenv
+requests

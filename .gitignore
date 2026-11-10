@@ -5,3 +5,12 @@ eval/reports/*
 !eval/reports/.gitkeep
 chroma_db/
 .venv/
+
+# Additional local development files
+.pytest_cache/
+*.log
+*.coverage
+coverage.xml
+graph_debug.txt
+.DS_Store
+Thumbs.db
