@@ -326,14 +326,6 @@ illustrative examples in the prompt.
         state.get("alert_type"),
     )
 
-    print("\n========== DRAFT NODE DEBUG ==========")
-    print("PROMPT HAS TX_20011:", "TX_20011" in prompt.upper())
-    print("PROMPT HAS CUST_1001_KYC:", "CUST_1001_KYC" in prompt.upper())
-    print("PROMPT HAS TARIQ:", "Tariq" in prompt)
-    print("PROMPT HAS STRUCTURING POLICY:", "POL_STRUCT_01" in prompt.upper())
-    print("PROMPT LENGTH:", len(prompt))
-    print("======================================\n")
-
     response_text, in_tok, out_tok = call_llm(prompt, json_mode=False)
     call_cost = calculate_token_cost(in_tok, out_tok, settings.LLM_MODEL)
 

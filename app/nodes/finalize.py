@@ -64,7 +64,7 @@ def finalize_node(state: AlertState) -> Dict[str, Any]:
                     str(state.get("draft_note") or ""),
                     str(state.get("human_edits") or ""),
                     str(state.get("human_notes") or ""),
-                ]).lower()
+                ]).lower().replace("_", " ")
 
                 if any(phrase in review_text for phrase in [
                     "recommend sar filing",
@@ -88,6 +88,7 @@ def finalize_node(state: AlertState) -> Dict[str, Any]:
                 elif any(phrase in review_text for phrase in [
                     "false positive",
                     "close alert",
+                    "close false positive",
                 ]):
                     final_disposition = (
                         CaseDisposition.CLOSE_FALSE_POSITIVE.value

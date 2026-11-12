@@ -212,7 +212,8 @@ aml-alert-agent/
 │   └── policies/                # Institutional AML policy manuals
 │
 ├── docs/                        # Architecture & Contracts
-│   └── contract.md              # State, tool, and API interface contracts
+│   ├── contract.md              # State, tool, and API interface contracts
+│   └── PERFORMANCE_METRICS.md   # Benchmark metrics, math formulas & evaluation KPIs
 │
 ├── eval/                        # Evaluation & Chaos Framework
 │   ├── chaos_cases.py           # Adversarial injection & timeout test cases

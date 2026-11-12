@@ -7,7 +7,15 @@ Simulates real-world operational hazards and adversarial attacks:
 """
 
 import copy
+from pathlib import Path
+import sys
 from typing import Any, Dict, List
+
+# Ensure workspace root is in sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from app import state
 from app.graph import build_aml_graph
 from app.nodes.claim_check import claim_check_node

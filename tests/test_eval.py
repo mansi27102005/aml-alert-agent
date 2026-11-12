@@ -39,16 +39,25 @@ def test_metrics_classification_metrics():
     assert res["accuracy"] == 0.75
     assert res["precision"] == 0.5
     assert res["recall"] == 1.0
+    assert "macro_f1" in res
+    assert "weighted_f1" in res
+    assert "confusion_matrix" in res
+    assert "per_class" in res
+    assert res["per_class"]["FILE_SAR"]["support"] == 1
+    assert res["per_class"]["CLOSE_FALSE_POSITIVE"]["support"] == 3
 
 
 def test_metrics_telemetry_summary():
     cases = [
-        {"total_tokens_used": 1000, "estimated_cost_usd": 0.002},
-        {"total_tokens_used": 2000, "estimated_cost_usd": 0.004},
+        {"total_tokens_used": 1000, "estimated_cost_usd": 0.002, "execution_latency_ms": 150.0},
+        {"total_tokens_used": 2000, "estimated_cost_usd": 0.004, "execution_latency_ms": 250.0},
     ]
     summary = calculate_telemetry_summary(cases)
     assert summary["avg_tokens"] == 1500.0
     assert summary["total_cost_usd"] == 0.006
+    assert summary["avg_latency_ms"] == 200.0
+    assert summary["p95_latency_ms"] == 250.0
+    assert summary["max_latency_ms"] == 250.0
 
 
 def test_chaos_suite_resilience():
