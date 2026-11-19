@@ -3,9 +3,13 @@
 Exposes investigation, approval, state retrieval and health endpoints.
 """
 
-from typing import Any, Dict, Optional
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 from fastapi.encoders import jsonable_encoder
 
@@ -20,6 +24,15 @@ app = FastAPI(
     title="AML Alert Investigator API",
     description="Agentic AI Banking Operations and AML Investigation Assistant",
     version="1.0.0",
+)
+
+# Enable CORS for browser frontends (e.g. React/Vite on localhost:5173)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -61,6 +74,20 @@ def get_thread_state(thread_id: str) -> Dict[str, Any]:
         )
 
     return snapshot.values
+
+
+# ============================================================
+# 0. FRONTEND WEB APPLICATION
+# ============================================================
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/app", response_class=HTMLResponse)
+def serve_web_frontend():
+    """Serves the standalone modern React/Tailwind compliance dashboard."""
+    index_file = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return HTMLResponse("<h2>AML Alert Investigator API Live</h2><p>Visit <a href='/docs'>/docs</a></p>")
 
 
 # ============================================================
@@ -178,3 +205,31 @@ def get_alert_state(alert_id: str):
         "alert_id": alert_id,
         "state": state
     })
+
+
+# ============================================================
+# 5. LIST AVAILABLE ALERTS (FOR FRONTEND QUEUE)
+# ============================================================
+
+@app.get("/alerts")
+def list_alerts():
+    """Retrieve all pre-configured synthetic banking alerts from dataset."""
+    alerts_path = Path(__file__).resolve().parent.parent / "data" / "alerts.json"
+    if alerts_path.exists():
+        with open(alerts_path, "r", encoding="utf-8") as f:
+            alerts = json.load(f)
+            return jsonable_encoder({"alerts": alerts, "total": len(alerts)})
+    return jsonable_encoder({"alerts": [], "total": 0})
+
+
+# ============================================================
+# 6. EVALUATION BENCHMARK SUMMARY
+# ============================================================
+
+@app.get("/eval/summary")
+def get_eval_summary():
+    """Retrieve the latest markdown evaluation benchmark report."""
+    report_path = Path(__file__).resolve().parent.parent / "eval" / "reports" / "eval_summary.md"
+    if report_path.exists():
+        return {"report_markdown": report_path.read_text(encoding="utf-8")}
+    return {"report_markdown": None}

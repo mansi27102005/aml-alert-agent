@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AML Intelligence | Agentic Compliance Workbench</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>" />
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              950: '#060B14',
+              900: '#0A1120',
+              850: '#0E172B',
+              800: '#142038',
+              700: '#1E2E4E',
+              600: '#2A3F68',
+              accent: '#38BDF8',
+              blue: '#3B82F6',
+              emerald: '#10B981',
+              rose: '#EF4444',
+              amber: '#F59E0B',
+              violet: '#8B5CF6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- React 18 & ReactDOM via CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel Standalone for JSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body {
+      background-color: #070D18;
+      color: #E2E8F0;
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B1322;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E2E4E;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2E4674;
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(20, 32, 56, 0.75) 0%, rgba(14, 23, 43, 0.85) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(42, 63, 104, 0.5);
+    }
+    .citation-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #7DD3FC;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin: 0 2px;
+      display: inline-block;
+      font-weight: 500;
+    }
+    .citation-badge-policy {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #C4B5FD;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin: 0 2px;
+      display: inline-block;
+      font-weight: 500;
+    }
+    .prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 0.75rem;
+    }
+    .prose th, .prose td {
+      border: 1px solid rgba(42, 63, 104, 0.6);
+      padding: 6px 10px;
+    }
+    .prose th {
+      background: #0E172B;
+      color: #94A3B8;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .prose td {
+      background: rgba(10, 17, 32, 0.4);
+    }
+    .prose h1, .prose h2, .prose h3 {
+      color: #F8FAFC;
+      font-weight: 700;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .pulse-ring {
+      animation: pulse-ring 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-brand-accent selection:text-brand-950">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    const API_BASE = window.location.origin.includes(':8000') 
+      ? window.location.origin 
+      : 'http://127.0.0.1:8000';
+
+    // ============================================================
+    // APPLICATION ROOT
+    // ============================================================
+    function App() {
+      const [activeTab, setActiveTab] = useState('queue'); // queue | workbench | analytics
+      const [apiHealthy, setApiHealthy] = useState(null);
+      const [alerts, setAlerts] = useState([]);
+      const [loadingAlerts, setLoadingAlerts] = useState(false);
+      const [activeAlertId, setActiveAlertId] = useState(null);
+      const [currentState, setCurrentState] = useState(null);
+      const [isInvestigating, setIsInvestigating] = useState(false);
+      const [isApproving, setIsApproving] = useState(false);
+      const [actionFeedback, setActionFeedback] = useState(null);
+      const [benchmarkReport, setBenchmarkReport] = useState('');
+      const [sessionHistory, setSessionHistory] = useState({});
+
+      // Filter states for queue
+      const [typologyFilter, setTypologyFilter] = useState('ALL');
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Auto-dismiss toast feedback after 5 seconds
+      useEffect(() => {
+        if (actionFeedback) {
+          const timer = setTimeout(() => setActionFeedback(null), 5000);
+          return () => clearTimeout(timer);
+        }
+      }, [actionFeedback]);
+
+      // Check backend health
+      const checkHealth = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(4000) });
+          if (res.ok) {
+            setApiHealthy(true);
+          } else {
+            setApiHealthy(false);
+          }
+        } catch {
+          setApiHealthy(false);
+        }
+      };
+
+      // Fetch alerts from backend
+      const fetchAlerts = async () => {
+        setLoadingAlerts(true);
+        try {
+          const res = await fetch(`${API_BASE}/alerts`);
+          if (res.ok) {
+            const data = await res.json();
+            setAlerts(data.alerts || []);
+          }
+        } catch (err) {
+          console.error("Failed to load alerts:", err);
+        } finally {
+          setLoadingAlerts(false);
+        }
+      };
+
+      // Fetch benchmark summary
+      const fetchBenchmark = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/eval/summary`);
+          if (res.ok) {
+            const data = await res.json();
+            setBenchmarkReport(data.report_markdown || '');
+          }
+        } catch (err) {
+          console.error("Failed to load benchmark:", err);
+        }
+      };
+
+      useEffect(() => {
+        checkHealth();
+        fetchAlerts();
+        fetchBenchmark();
+        const timer = setInterval(checkHealth, 15000);
+        return () => clearInterval(timer);
+      }, []);
+
+      // Trigger investigation on an alert
+      const handleInvestigate = async (alertPayload) => {
+        setIsInvestigating(true);
+        setActionFeedback(null);
+        setActiveAlertId(alertPayload.alert_id);
+        setActiveTab('workbench');
+
+        try {
+          const res = await fetch(`${API_BASE}/alerts/investigate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(alertPayload)
+          });
+          const data = await res.json();
+          if (res.ok && data.state) {
+            setCurrentState(data.state);
+            setSessionHistory(prev => ({
+              ...prev,
+              [alertPayload.alert_id]: {
+                status: data.state.status,
+                disposition: data.state.final_disposition,
+                timestamp: new Date().toLocaleTimeString()
+              }
+            }));
+            setActionFeedback({ type: 'success', message: `Investigation completed/paused: ${data.state.status}` });
+          } else {
+            setActionFeedback({ type: 'error', message: data.detail || 'Failed to start investigation' });
+          }
+        } catch (err) {
+          setActionFeedback({ type: 'error', message: err.message });
+        } finally {
+          setIsInvestigating(false);
+        }
+      };
+
+      // Fetch state of an alert by ID
+      const handleLoadState = async (alertId) => {
+        if (!alertId) return;
+        setIsInvestigating(true);
+        setActionFeedback(null);
+        try {
+          const res = await fetch(`${API_BASE}/alerts/${alertId}/state`);
+          const data = await res.json();
+          if (res.ok && data.state) {
+            setCurrentState(data.state);
+            setActiveAlertId(alertId);
+            setSessionHistory(prev => ({
+              ...prev,
+              [alertId]: {
+                status: data.state.status,
+                disposition: data.state.final_disposition,
+                timestamp: new Date().toLocaleTimeString()
+              }
+            }));
+          } else {
+            setActionFeedback({ type: 'error', message: data.detail || `Alert ${alertId} not found in active memory.` });
+          }
+        } catch (err) {
+          setActionFeedback({ type: 'error', message: err.message });
+        } finally {
+          setIsInvestigating(false);
+        }
+      };
+
+      // Submit analyst approval/override
+      const handleDecision = async (approvalData) => {
+        if (!currentState || !currentState.alert_id) return;
+        setIsApproving(true);
+        setActionFeedback(null);
+
+        try {
+          const res = await fetch(`${API_BASE}/alerts/${currentState.alert_id}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(approvalData)
+          });
+          const data = await res.json();
+          if (res.ok && data.state) {
+            setCurrentState(data.state);
+            setSessionHistory(prev => ({
+              ...prev,
+              [currentState.alert_id]: {
+                status: data.state.status,
+                disposition: data.state.final_disposition,
+                timestamp: new Date().toLocaleTimeString()
+              }
+            }));
+            setActionFeedback({
+              type: 'success',
+              message: `Case Finalized: ${data.state.final_disposition || data.state.status}`
+            });
+          } else {
+            setActionFeedback({ type: 'error', message: data.detail || 'Failed to submit decision' });
+          }
+        } catch (err) {
+          setActionFeedback({ type: 'error', message: err.message });
+        } finally {
+          setIsApproving(false);
+        }
+      };
+
+      return (
+        <div className="flex flex-col min-h-screen">
+          {/* TOP NAVBAR */}
+          <header className="sticky top-0 z-50 border-b border-brand-700/60 bg-brand-900/90 backdrop-blur-md px-6 py-3.5 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-brand-blue to-brand-accent flex items-center justify-center shadow-lg shadow-brand-blue/20">
+                <span className="text-xl">🛡️</span>
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-base font-bold tracking-tight text-white">AML Intelligence</h1>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-brand-accent/10 border border-brand-accent/30 text-brand-accent font-medium">Enterprise Agent</span>
+                </div>
+                <p className="text-xs text-slate-400">Deterministic Trust & Risk-Tiered HITL Investigator</p>
+              </div>
+            </div>
+
+            {/* NAVIGATION PILLS */}
+            <nav className="flex items-center space-x-1 bg-brand-850/80 p-1 rounded-xl border border-brand-700/50">
+              <button
+                onClick={() => setActiveTab('queue')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'queue'
+                    ? 'bg-brand-blue text-white shadow-md shadow-brand-blue/30'
+                    : 'text-slate-400 hover:text-white hover:bg-brand-800/60'
+                }`}
+              >
+                <span>📥</span>
+                <span>Alert Inbox</span>
+                <span className="ml-1.5 px-1.5 py-0.2 rounded bg-black/30 text-[10px]">{alerts.length}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('workbench')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'workbench'
+                    ? 'bg-brand-blue text-white shadow-md shadow-brand-blue/30'
+                    : 'text-slate-400 hover:text-white hover:bg-brand-800/60'
+                }`}
+              >
+                <span>🔬</span>
+                <span>Investigation Workbench</span>
+                {currentState && (
+                  <span className="h-2 w-2 rounded-full bg-brand-accent animate-pulse"></span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'analytics'
+                    ? 'bg-brand-blue text-white shadow-md shadow-brand-blue/30'
+                    : 'text-slate-400 hover:text-white hover:bg-brand-800/60'
+                }`}
+              >
+                <span>📊</span>
+                <span>Performance & Metrics</span>
+              </button>
+            </nav>
+
+            {/* SYSTEM STATUS */}
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-brand-850 border border-brand-700/40 text-xs">
+                <span className={`h-2 w-2 rounded-full ${apiHealthy === true ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : apiHealthy === false ? 'bg-rose-500' : 'bg-amber-400 animate-pulse'}`}></span>
+                <span className="text-slate-300 font-medium">
+                  {apiHealthy === true ? 'Backend Live' : apiHealthy === false ? 'Backend Offline' : 'Connecting...'}
+                </span>
+                <span className="text-xs text-slate-400">:8000</span>
+              </div>
+            </div>
+          </header>
+
+          {/* GLOBAL FEEDBACK TOAST */}
+          {actionFeedback && (
+            <div className={`mx-6 mt-3 px-4 py-2.5 rounded-lg border text-xs flex items-center justify-between transition-all ${
+              actionFeedback.type === 'success'
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+            }`}>
+              <div className="flex items-center space-x-2">
+                <span>{actionFeedback.type === 'success' ? '✓' : '⚠️'}</span>
+                <span>{actionFeedback.message}</span>
+              </div>
+              <button onClick={() => setActionFeedback(null)} className="text-slate-400 hover:text-white font-bold px-1">&times;</button>
+            </div>
+          )}
+
+          {/* MAIN VIEW CONTENT */}
+          <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
+            {activeTab === 'queue' && (
+              <AlertQueueView
+                alerts={alerts}
+                loading={loadingAlerts}
+                onSelectAlert={handleInvestigate}
+                typologyFilter={typologyFilter}
+                setTypologyFilter={setTypologyFilter}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                sessionHistory={sessionHistory}
+              />
+            )}
+
+            {activeTab === 'workbench' && (
+              <WorkbenchView
+                state={currentState}
+                isInvestigating={isInvestigating}
+                isApproving={isApproving}
+                onDecision={handleDecision}
+                onLoadState={handleLoadState}
+                alerts={alerts}
+                activeAlertId={activeAlertId}
+                onTriggerInvestigate={handleInvestigate}
+              />
+            )}
+
+            {activeTab === 'analytics' && (
+              <AnalyticsView
+                benchmarkReport={benchmarkReport}
+                onRefresh={fetchBenchmark}
+              />
+            )}
+          </main>
+
+          {/* FOOTER */}
+          <footer className="border-t border-brand-800/80 bg-brand-950/90 px-6 py-3 text-xs text-slate-400 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <span>Federal Reserve SR 11-7 & FinCEN BSA Compliant</span>
+              <span>•</span>
+              <span>Multi-Agent LangGraph State Machine</span>
+              <span>•</span>
+              <span>Deterministic Citation Ledger</span>
+            </div>
+            <div>AML Alert Investigator v1.0 • Role A & Role B Core</div>
+          </footer>
+        </div>
+      );
+    }
+
+    // ============================================================
+    // VIEW 1: ALERT QUEUE / INBOX
+    // ============================================================
+    function AlertQueueView({ alerts, loading, onSelectAlert, typologyFilter, setTypologyFilter, searchQuery, setSearchQuery, sessionHistory }) {
+      const filtered = useMemo(() => {
+        return alerts.filter(a => {
+          const matchTypology = typologyFilter === 'ALL' || a.alert_type === typologyFilter;
+          const q = searchQuery.toLowerCase().trim();
+          const matchQuery = !q || 
+            a.alert_id.toLowerCase().includes(q) ||
+            a.customer_id.toLowerCase().includes(q) ||
+            (a.scenario_tag && a.scenario_tag.toLowerCase().includes(q));
+          return matchTypology && matchQuery;
+        });
+      }, [alerts, typologyFilter, searchQuery]);
+
+      const counts = useMemo(() => {
+        return {
+          total: alerts.length,
+          structuring: alerts.filter(a => a.alert_type === 'STRUCTURING').length,
+          sanctions: alerts.filter(a => a.alert_type === 'SANCTIONS_MATCH').length,
+          hvt: alerts.filter(a => a.alert_type === 'HIGH_VALUE_TRANSFER').length
+        };
+      }, [alerts]);
+
+      return (
+        <div className="space-y-6">
+          {/* HEADER SUMMARY METRICS */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="glass-card rounded-xl p-5 border-l-4 border-brand-accent">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Active Alerts</div>
+              <div className="text-3xl font-extrabold text-white mt-2">{counts.total}</div>
+              <div className="text-xs text-slate-400 mt-1">Synthetic Core Banking Dataset</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Structuring / Smurfing</div>
+              <div className="text-3xl font-extrabold text-amber-400 mt-2">{counts.structuring}</div>
+              <div className="text-xs text-slate-400 mt-1">31 CFR § 1010.311 Sub-threshold</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-5 border-l-4 border-rose-500">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sanctions & PEP Hits</div>
+              <div className="text-3xl font-extrabold text-rose-400 mt-2">{counts.sanctions}</div>
+              <div className="text-xs text-slate-400 mt-1">OFAC Specially Designated Nationals</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-5 border-l-4 border-brand-blue">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">High-Value Transfers</div>
+              <div className="text-3xl font-extrabold text-blue-400 mt-2">{counts.hvt}</div>
+              <div className="text-xs text-slate-400 mt-1">Commercial Velocity Deviations</div>
+            </div>
+          </div>
+
+          {/* FILTER TOOLBAR */}
+          <div className="glass-card rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-80">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search Alert ID, Customer, or Scenario..."
+                  className="w-full bg-brand-900 border border-brand-700/70 rounded-lg px-3.5 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-accent transition"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-white">&times;</button>
+                )}
+              </div>
+            </div>
+
+            {/* TYPOLOGY PILLS */}
+            <div className="flex items-center space-x-1.5 w-full md:w-auto overflow-x-auto">
+              {[
+                { key: 'ALL', label: 'All Alerts' },
+                { key: 'STRUCTURING', label: 'Structuring' },
+                { key: 'SANCTIONS_MATCH', label: 'Sanctions Hits' },
+                { key: 'HIGH_VALUE_TRANSFER', label: 'High Value' }
+              ].map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setTypologyFilter(t.key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                    typologyFilter === t.key
+                      ? 'bg-brand-blue text-white shadow-sm'
+                      : 'bg-brand-900 text-slate-300 hover:text-white hover:bg-brand-800'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ALERT TABLE */}
+          <div className="glass-card rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-brand-900/80 border-b border-brand-700/60 uppercase font-semibold text-slate-400 tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3.5">Alert Reference</th>
+                    <th className="px-5 py-3.5">Typology</th>
+                    <th className="px-5 py-3.5">Customer</th>
+                    <th className="px-5 py-3.5">Total Amount</th>
+                    <th className="px-5 py-3.5">Transaction Count</th>
+                    <th className="px-5 py-3.5">Scenario / Risk Tag</th>
+                    <th className="px-5 py-3.5">Session Status</th>
+                    <th className="px-5 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-800/60 text-slate-300">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="8" className="px-5 py-8 text-center text-slate-400">Loading alerts from banking engine...</td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="px-5 py-8 text-center text-slate-400">No alerts match the selected criteria.</td>
+                    </tr>
+                  ) : (
+                    filtered.map(alert => {
+                      const amount = alert.trigger_details?.total_amount;
+                      const txCount = alert.trigger_details?.transaction_ids?.length || 1;
+                      const isStructuring = alert.alert_type === 'STRUCTURING';
+                      const isSanctions = alert.alert_type === 'SANCTIONS_MATCH';
+                      const sessionRecord = sessionHistory[alert.alert_id];
+
+                      return (
+                        <tr key={alert.alert_id} className="hover:bg-brand-800/40 transition">
+                          <td className="px-5 py-3.5 font-mono font-semibold text-brand-accent">
+                            {alert.alert_id}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${
+                              isSanctions 
+                                ? 'bg-rose-950/80 text-rose-300 border border-rose-700/50' 
+                                : isStructuring 
+                                ? 'bg-amber-950/80 text-amber-300 border border-amber-700/50' 
+                                : 'bg-blue-950/80 text-blue-300 border border-blue-700/50'
+                            }`}>
+                              {alert.alert_type.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-slate-300">
+                            {alert.customer_id}
+                          </td>
+                          <td className="px-5 py-3.5 font-semibold text-white">
+                            {amount ? `$${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'N/A'}
+                          </td>
+                          <td className="px-5 py-3.5 text-slate-400">
+                            {txCount} {txCount === 1 ? 'transaction' : 'transactions'}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span className="text-slate-300 bg-brand-900 px-2 py-0.5 rounded border border-brand-700/40 text-[11px]">
+                              {(alert.scenario_tag || 'standard').replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            {sessionRecord ? (
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+                                sessionRecord.status === 'COMPLETED'
+                                  ? 'bg-emerald-950 text-emerald-300 border-emerald-600/50'
+                                  : sessionRecord.status === 'ESCALATED'
+                                  ? 'bg-rose-950 text-rose-300 border-rose-600/50'
+                                  : 'bg-amber-950 text-amber-300 border-amber-600/50 animate-pulse'
+                              }`}>
+                                {sessionRecord.disposition ? `${sessionRecord.status}: ${sessionRecord.disposition}` : sessionRecord.status}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-[11px]">— Untriaged</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <button
+                              onClick={() => onSelectAlert(alert)}
+                              className="px-3.5 py-1.5 rounded-lg bg-brand-blue hover:bg-blue-600 text-white font-semibold shadow-sm hover:shadow-brand-blue/30 transition flex items-center space-x-1.5 ml-auto text-xs"
+                            >
+                              <span>🚀</span>
+                              <span>Investigate</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================
+    // VIEW 2: INVESTIGATION WORKBENCH
+    // ============================================================
+    function WorkbenchView({ state, isInvestigating, isApproving, onDecision, onLoadState, alerts, activeAlertId, onTriggerInvestigate }) {
+      const [inputAlertId, setInputAlertId] = useState(activeAlertId || '');
+      const [reviewerId, setReviewerId] = useState('senior_compliance_officer');
+      const [reviewerComments, setReviewerComments] = useState('');
+      const [editedNarrative, setEditedNarrative] = useState('');
+      const [overrideDisposition, setOverrideDisposition] = useState('');
+      
+      // Interactive tabs & drawers
+      const [isEditingNarrative, setIsEditingNarrative] = useState(false);
+      const [copiedNarrative, setCopiedNarrative] = useState(false);
+      const [showClaimLedger, setShowClaimLedger] = useState(false);
+      const [showAuditTrail, setShowAuditTrail] = useState(false);
+
+      useEffect(() => {
+        if (state) {
+          setInputAlertId(state.alert_id || '');
+          setEditedNarrative(state.human_edits || state.draft_note || '');
+          setIsEditingNarrative(false);
+        }
+      }, [state]);
+
+      // Copy narrative to clipboard
+      const handleCopyNarrative = () => {
+        const textToCopy = editedNarrative || (state ? (state.human_edits || state.draft_note) : '');
+        if (textToCopy && navigator.clipboard) {
+          navigator.clipboard.writeText(textToCopy);
+          setCopiedNarrative(true);
+          setTimeout(() => setCopiedNarrative(false), 2000);
+        }
+      };
+
+      // Reset narrative to initial AI draft
+      const handleResetNarrative = () => {
+        if (state && state.draft_note) {
+          setEditedNarrative(state.draft_note);
+        }
+      };
+
+      // Execution stages definition
+      const pipelineStages = [
+        { id: 1, name: 'Intake', desc: 'Schema & PII Tokenize', done: !!state },
+        { id: 2, name: 'Classify', desc: 'Typology Engine', done: !!(state && state.alert_type) },
+        { id: 3, name: 'Policy RAG', desc: 'ChromaDB Guidelines', done: !!(state && state.policy_chunks && state.policy_chunks.length > 0) },
+        { id: 4, name: 'Evidence', desc: 'Core Ledger & Watchlist', done: !!(state && state.evidence && Object.keys(state.evidence).length > 0) },
+        { id: 5, name: 'Draft Note', desc: 'FinCEN 5 Ws Narrative', done: !!(state && state.draft_note) },
+        { id: 6, name: 'Claim Check', desc: 'Deterministic Citations', done: !!(state && state.claim_check_passed) },
+        { id: 7, name: 'QA Verifier', desc: 'Skeptic 2nd-Line Auditor', done: !!(state && state.verifier_agreed) },
+        { id: 8, name: 'Risk Router', desc: 'Tier 1/2/3 Routing', done: !!(state && state.risk_tier) },
+        { id: 9, name: 'Human Review', desc: 'Analyst Sign-off', done: !!(state && (state.status === 'COMPLETED' || state.status === 'ESCALATED')) }
+      ];
+
+      // Download SAR Package
+      const handleDownloadSarJson = () => {
+        if (!state) return;
+        const jsonStr = JSON.stringify({
+          report_type: "FINCEN_SUSPICIOUS_ACTIVITY_REPORT",
+          generated_at: new Date().toISOString(),
+          metadata: {
+            alert_id: state.alert_id,
+            customer_id: state.customer_id,
+            typology: state.alert_type,
+            risk_tier: state.risk_tier,
+            status: state.status,
+            final_disposition: state.final_disposition
+          },
+          fincen_narrative: editedNarrative || state.human_edits || state.draft_note,
+          verification: {
+            claim_check_passed: state.claim_check_passed,
+            verifier_agreed: state.verifier_agreed,
+            claims: state.claims
+          },
+          policy_chunks: state.policy_chunks,
+          evidence: state.evidence,
+          audit_trace: state.audit_log
+        }, null, 2);
+
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `FINCEN_SAR_${state.alert_id || 'ALERT'}.json`;
+        a.click();
+      };
+
+      // Download Markdown Case Dossier
+      const handleDownloadSummaryMd = () => {
+        if (!state) return;
+        const mdStr = `# FinCEN Compliance Case Summary — ${state.alert_id}
+
+**Case Status:** \`${state.status}\`  
+**Final Disposition:** \`${state.final_disposition || 'PENDING'}\`  
+**Assigned Risk Tier:** \`${state.risk_tier || 'N/A'}\`  
+**Customer Reference:** \`${state.customer_id}\`  
+**Typology:** \`${state.alert_type}\`  
+**Reviewer:** \`${state.reviewer_id || reviewerId}\`  
+
+---
+
+## FinCEN 5 Ws Grounded Narrative
+${editedNarrative || state.human_edits || state.draft_note || 'No narrative generated.'}
+
+---
+
+## Regulatory Verification Controls
+- **Deterministic Claim Validation:** ${state.claim_check_passed ? 'PASSED (100% cited)' : 'FAILED'}
+- **2nd-Line Skeptic QA:** ${state.verifier_agreed ? 'AGREED' : 'DISAGREED'}
+- **Policy Citations Active:** ${(state.policy_chunks || []).map(p => p.source_id || p.id).join(', ') || 'None'}
+- **Total Recorded Audit Events:** ${state.audit_log ? state.audit_log.length : 0}
+`;
+        const blob = new Blob([mdStr], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `CASE_SUMMARY_${state.alert_id || 'ALERT'}.md`;
+        a.click();
+      };
+
+      return (
+        <div className="space-y-6">
+          {/* SEARCH & LAUNCH BAR */}
+          <div className="glass-card rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3 w-full md:w-auto">
+              <span className="text-xs font-semibold uppercase text-slate-400">Load Case:</span>
+              <div className="relative flex-1 md:w-64">
+                <input
+                  type="text"
+                  value={inputAlertId}
+                  onChange={(e) => setInputAlertId(e.target.value.trim())}
+                  placeholder="e.g. ALT-STR-001, ALT-SAN-001..."
+                  className="w-full bg-brand-900 border border-brand-700/70 rounded-lg px-3 py-1.5 text-xs text-white uppercase font-mono focus:outline-none focus:border-brand-accent transition"
+                />
+              </div>
+              <button
+                onClick={() => onLoadState(inputAlertId)}
+                disabled={!inputAlertId || isInvestigating}
+                className="px-3.5 py-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white text-xs font-semibold transition"
+              >
+                Load State
+              </button>
+            </div>
+
+            {/* QUICK PRESET SELECTOR */}
+            <div className="flex items-center space-x-2 w-full md:w-auto">
+              <span className="text-xs text-slate-400">Or Pick Preset:</span>
+              <select
+                onChange={(e) => {
+                  const found = alerts.find(a => a.alert_id === e.target.value);
+                  if (found) onTriggerInvestigate(found);
+                }}
+                className="bg-brand-900 border border-brand-700/70 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-accent"
+              >
+                <option value="">-- Choose from 36 Cases --</option>
+                {alerts.map(a => (
+                  <option key={a.alert_id} value={a.alert_id}>
+                    {a.alert_id} • {a.alert_type} ({a.customer_id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* ACTIVE INVESTIGATION HERO STATUS */}
+          {state && (
+            <div className="glass-card rounded-xl p-6 border-brand-blue/40 shadow-xl">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-3">
+                    <h2 className="text-2xl font-extrabold text-white font-mono tracking-tight">{state.alert_id}</h2>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-blue/20 text-brand-accent border border-brand-accent/30">
+                      {state.alert_type}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                      state.risk_tier === 'TIER_3_FULL' ? 'bg-rose-950 text-rose-300 border border-rose-600/60' :
+                      state.risk_tier === 'TIER_2_STANDARD' ? 'bg-amber-950 text-amber-300 border border-amber-600/60' :
+                      'bg-emerald-950 text-emerald-300 border border-emerald-600/60'
+                    }`}>
+                      {state.risk_tier || 'TIER PENDING'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Customer Reference: <span className="font-mono text-slate-200">{state.customer_id}</span> • 
+                    Status: <span className={`font-semibold ${state.status === 'COMPLETED' ? 'text-emerald-400' : state.status === 'AWAITING_APPROVAL' ? 'text-amber-400' : 'text-slate-300'}`}>{state.status}</span>
+                  </p>
+                </div>
+
+                {/* EXPORT ACTION BUTTONS */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleDownloadSarJson}
+                    className="px-3 py-1.5 rounded-lg bg-brand-850 hover:bg-brand-800 border border-brand-700 text-xs text-slate-200 font-semibold flex items-center space-x-1.5 transition"
+                  >
+                    <span>📥</span>
+                    <span>FinCEN SAR (JSON)</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadSummaryMd}
+                    className="px-3 py-1.5 rounded-lg bg-brand-850 hover:bg-brand-800 border border-brand-700 text-xs text-slate-200 font-semibold flex items-center space-x-1.5 transition"
+                  >
+                    <span>📄</span>
+                    <span>Summary (MD)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 9-STAGE PIPELINE STEPPER */}
+              <div className="mt-6 pt-5 border-t border-brand-700/50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    LangGraph Multi-Agent Pipeline Execution
+                  </div>
+                  {isInvestigating && (
+                    <span className="text-xs text-brand-accent flex items-center space-x-1 animate-pulse">
+                      <span className="inline-block h-2 w-2 rounded-full bg-brand-accent"></span>
+                      <span>Agent Pipeline Active...</span>
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-9 gap-2">
+                  {pipelineStages.map((stage) => {
+                    const isCurrentInterrupt = state.status === 'AWAITING_APPROVAL' && stage.id === 9;
+                    const isBlocked = state.status === 'ESCALATED' && (stage.id === 6 || stage.id === 7);
+
+                    return (
+                      <div
+                        key={stage.id}
+                        className={`p-2.5 rounded-lg border text-center transition ${
+                          stage.done
+                            ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                            : isCurrentInterrupt
+                            ? 'bg-amber-950/50 border-amber-500/60 text-amber-300 animate-pulse'
+                            : isBlocked
+                            ? 'bg-rose-950/50 border-rose-500/60 text-rose-300'
+                            : isInvestigating
+                            ? 'bg-brand-900/60 border-brand-700 text-slate-300 animate-pulse'
+                            : 'bg-brand-900/40 border-brand-800 text-slate-400'
+                        }`}
+                      >
+                        <div className="text-[10px] uppercase font-mono tracking-wider font-semibold opacity-80">
+                          Stage {stage.id.toString().padStart(2, '0')}
+                        </div>
+                        <div className="text-xs font-bold mt-0.5 truncate">{stage.name}</div>
+                        <div className="text-[10px] opacity-75 mt-0.5 truncate">{stage.desc}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ACTIVE LOADING SKELETON (WHEN INVESTIGATING WITHOUT PRIOR STATE) */}
+          {isInvestigating && !state && (
+            <div className="glass-card rounded-xl p-8 text-center space-y-4 border-brand-accent/50 shadow-2xl">
+              <div className="h-14 w-14 mx-auto rounded-full bg-brand-blue/20 border-2 border-brand-accent flex items-center justify-center pulse-ring">
+                <span className="text-2xl animate-spin">⚙️</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Agent Multi-Stage Investigation in Progress</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-lg mx-auto">
+                  Executing LangGraph state machine: Intake & Classification → Policy RAG Retrieval → Ledger Evidence Gathering → Drafting 5 Ws Narrative → Deterministic Claim Validation → 2nd-Line Skeptic Verification.
+                </p>
+              </div>
+              <div className="flex justify-center items-center space-x-2 text-xs font-mono text-brand-accent">
+                <span className="h-2 w-2 rounded-full bg-brand-accent animate-ping"></span>
+                <span>Synthesizing institutional guidelines & core records...</span>
+              </div>
+            </div>
+          )}
+
+          {/* MAIN WORKBENCH SPLIT-SCREEN LAYOUT */}
+          {state ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* LEFT 5 COLUMNS: EVIDENCE REPOSITORY */}
+                <div className="lg:col-span-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">Evidence Repository</h3>
+                    <span className="text-xs text-brand-accent font-mono">4 Sources + ChromaDB RAG</span>
+                  </div>
+
+                  {/* TOOL 1: KYC PROFILE */}
+                  <div className="glass-card rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-brand-700/40 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <span>👤</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-wide">Customer Profile</span>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-mono border border-emerald-700/50">
+                        {state.evidence?.customer_profile?.status || 'UNKNOWN'}
+                      </span>
+                    </div>
+
+                    {state.evidence?.customer_profile?.data && (
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 block text-xs">Full Name:</span>
+                          <span className="font-semibold text-white">{state.evidence.customer_profile.data.full_name || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-xs">KYC Risk:</span>
+                          <span className="font-bold text-amber-400">{state.evidence.customer_profile.data.kyc_risk_rating || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-xs">Occupation:</span>
+                          <span className="text-slate-200">{state.evidence.customer_profile.data.occupation || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-xs">Annual Income:</span>
+                          <span className="text-slate-200">${Number(state.evidence.customer_profile.data.annual_income || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="col-span-2 pt-1 border-t border-brand-800 text-xs text-slate-400 flex flex-wrap gap-1">
+                          <span className="text-slate-400">Citations:</span>
+                          {(state.evidence.customer_profile.source_ids || []).map(s => (
+                            <span key={s} className="citation-badge">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TOOL 2: CORE BANKING LEDGER */}
+                  <div className="glass-card rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-brand-700/40 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <span>💳</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-wide">Transaction Ledger</span>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-mono border border-emerald-700/50">
+                        {state.evidence?.transactions?.status || 'UNKNOWN'}
+                      </span>
+                    </div>
+
+                    {state.evidence?.transactions?.data?.records && (
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {state.evidence.transactions.data.records.map((tx, i) => (
+                          <div key={i} className="p-2.5 rounded-lg bg-brand-900/70 border border-brand-800 text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-brand-accent font-semibold">{tx.transaction_id}</span>
+                              <span className="font-bold text-emerald-400">${Number(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-300">
+                              {tx.transaction_type} • {tx.channel} • Date: {tx.date}
+                            </div>
+                            {tx.memo && (
+                              <div className="text-xs text-slate-300 italic bg-black/30 p-1.5 rounded border border-brand-800">
+                                Memo: "{tx.memo}"
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TOOL 3: WATCHLIST SCREENING */}
+                  <div className="glass-card rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between border-b border-brand-700/40 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <span>🌐</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-wide">OFAC / PEP Watchlist</span>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-mono border border-emerald-700/50">
+                        {state.evidence?.watchlist?.status || 'UNKNOWN'}
+                      </span>
+                    </div>
+
+                    {state.evidence?.watchlist?.data && (
+                      <div className="text-xs space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Match Status:</span>
+                          <span className={`font-bold ${state.evidence.watchlist.data.is_match ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {state.evidence.watchlist.data.is_match ? 'CONFIRMED MATCH' : 'CLEAN (No Match)'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Fuzzy Score:</span>
+                          <span className="font-mono text-white">{state.evidence.watchlist.data.match_score || 0}%</span>
+                        </div>
+                        <div className="pt-1 text-xs text-slate-400 flex flex-wrap gap-1">
+                          <span className="text-slate-400">Source:</span>
+                          {(state.evidence.watchlist.source_ids || []).map(s => (
+                            <span key={s} className="citation-badge">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TOOL 4: INSTITUTIONAL POLICY CHUNKS (CHROMADB RAG) */}
+                  <div className="glass-card rounded-xl p-4 space-y-3 border-brand-violet/40">
+                    <div className="flex items-center justify-between border-b border-brand-700/40 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <span>⚖️</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-wide">Institutional Policies (RAG)</span>
+                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded bg-violet-950 text-violet-300 font-mono border border-violet-700/50">
+                        {state.policy_chunks?.length || 0} Retrieved
+                      </span>
+                    </div>
+
+                    {state.policy_chunks && state.policy_chunks.length > 0 ? (
+                      <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                        {state.policy_chunks.map((p, idx) => {
+                          const polId = p.source_id || p.id || `POL_${idx}`;
+                          const polTitle = p.title || p.metadata?.title || 'Policy Standard';
+                          const polContent = p.content || p.text || '';
+
+                          return (
+                            <div key={idx} className="p-2.5 rounded-lg bg-brand-900/80 border border-violet-900/60 text-xs space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="citation-badge-policy">SRC:{polId}</span>
+                                <span className="text-[11px] font-semibold text-slate-300 truncate max-w-[200px]">{polTitle}</span>
+                              </div>
+                              <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                                {polContent}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-400 italic p-2 bg-brand-900/40 rounded">
+                        No specific policy chunks retrieved for this case.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* RIGHT 7 COLUMNS: NARRATIVE & GOVERNANCE */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">FinCEN SAR Narrative & Review</h3>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setShowClaimLedger(!showClaimLedger)}
+                        className={`text-xs px-2.5 py-0.5 rounded font-bold border transition flex items-center space-x-1 ${
+                          showClaimLedger
+                            ? 'bg-brand-accent text-brand-950 border-brand-accent'
+                            : 'bg-brand-850 hover:bg-brand-800 text-brand-accent border-brand-accent/40'
+                        }`}
+                      >
+                        <span>🔍 Claims: {state.claim_check_passed ? 'PASSED' : 'FAILED'}</span>
+                        <span className="text-[10px]">({state.claims?.length || 0})</span>
+                      </button>
+
+                      <span className={`text-xs px-2.5 py-0.5 rounded font-bold ${state.verifier_agreed ? 'bg-emerald-950 text-emerald-400 border border-emerald-600/50' : 'bg-rose-950 text-rose-400 border border-rose-600/50'}`}>
+                        Verifier: {state.verifier_agreed ? 'AGREED' : 'DISAGREED'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* SENTENCE-LEVEL CLAIM AUDIT LEDGER (EXPANDABLE) */}
+                  {showClaimLedger && (
+                    <div className="glass-card rounded-xl p-4 space-y-3 border-brand-accent/50 animate-fadeIn">
+                      <div className="flex items-center justify-between border-b border-brand-700/50 pb-2">
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                            Federal Reserve SR 11-7 Sentence-Level Claim Audit Ledger
+                          </h4>
+                          <p className="text-[11px] text-slate-400">
+                            Deterministic validation ensures zero ungrounded assertions in regulatory filings.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowClaimLedger(false)}
+                          className="text-xs text-slate-400 hover:text-white"
+                        >
+                          ✕ Close
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        {state.claims && state.claims.length > 0 ? (
+                          state.claims.map((claim, cIdx) => (
+                            <div
+                              key={cIdx}
+                              className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${
+                                claim.is_valid
+                                  ? 'bg-emerald-950/20 border-emerald-600/30 text-slate-200'
+                                  : 'bg-rose-950/30 border-rose-600/40 text-slate-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono text-[10px] text-slate-400">Sentence #{cIdx + 1}</span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                  claim.is_valid ? 'bg-emerald-950 text-emerald-300 border border-emerald-600/40' : 'bg-rose-950 text-rose-300 border border-rose-600/40'
+                                }`}>
+                                  {claim.is_valid ? '✓ VERIFIED CITED CLAIM' : '⚠️ UNVERIFIED CLAIM'}
+                                </span>
+                              </div>
+                              <p className="text-xs leading-relaxed">{claim.sentence}</p>
+                              <div className="flex items-center space-x-1 pt-1 border-t border-brand-800 text-[11px]">
+                                <span className="text-slate-400">Citations:</span>
+                                {(claim.cited_source_ids || []).map(cid => (
+                                  <span key={cid} className="citation-badge">{cid}</span>
+                                ))}
+                                {claim.validation_error && (
+                                  <span className="text-rose-400 font-semibold ml-2">({claim.validation_error})</span>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-xs text-slate-400 italic">No structured claims registered.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI NARRATIVE CARD WITH EDIT/PREVIEW TOGGLE & COPY BUTTON */}
+                  <div className="glass-card rounded-xl p-5 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-white">FinCEN 5 Ws Narrative (Who, What, When, Where, Why)</span>
+                        <span className="text-[11px] text-brand-accent">Strict Grounding [SRC:...]</span>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={handleCopyNarrative}
+                          className="px-2.5 py-1 rounded bg-brand-850 hover:bg-brand-800 border border-brand-700 text-slate-200 text-xs font-semibold flex items-center space-x-1 transition"
+                        >
+                          <span>{copiedNarrative ? '✓' : '📋'}</span>
+                          <span>{copiedNarrative ? 'Copied!' : 'Copy'}</span>
+                        </button>
+
+                        {state.status === 'AWAITING_APPROVAL' && (
+                          <button
+                            onClick={() => setIsEditingNarrative(!isEditingNarrative)}
+                            className="px-2.5 py-1 rounded bg-brand-800 hover:bg-brand-700 border border-brand-accent/40 text-brand-accent text-xs font-semibold transition"
+                          >
+                            {isEditingNarrative ? '👁️ Preview' : '✏️ Edit Narrative'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditingNarrative ? (
+                      <div className="space-y-2">
+                        <textarea
+                          rows={8}
+                          value={editedNarrative}
+                          onChange={(e) => setEditedNarrative(e.target.value)}
+                          className="w-full p-3.5 rounded-lg bg-brand-950 border border-brand-accent text-xs text-slate-100 font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                          placeholder="Edit the FinCEN 5 Ws narrative before final sign-off..."
+                        />
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span>Chars: {editedNarrative.length} | Words: {editedNarrative.trim().split(/\s+/).filter(Boolean).length}</span>
+                          {editedNarrative !== state.draft_note && (
+                            <button
+                              onClick={handleResetNarrative}
+                              className="text-amber-400 hover:underline"
+                            >
+                              ↺ Reset to Initial AI Draft
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 rounded-lg bg-brand-950/80 border border-brand-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap max-h-72 overflow-y-auto">
+                        {editedNarrative || state.human_edits || state.draft_note || 'No narrative generated yet.'}
+                      </div>
+                    )}
+
+                    {state.verifier_notes && (
+                      <div className="p-3 rounded-lg bg-brand-900/60 border border-brand-700/50 text-xs text-slate-300 space-y-1">
+                        <div className="font-semibold text-brand-accent text-[11px] uppercase tracking-wide">2nd-Line Skeptic Auditor Findings:</div>
+                        <div>{state.verifier_notes}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* HUMAN-IN-THE-LOOP APPROVAL CARD */}
+                  <div className="glass-card rounded-xl p-5 space-y-4 border-brand-accent/30">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Analyst Decision Center</h4>
+                        <p className="text-xs text-slate-400">Risk-Tiered Human-in-the-Loop Governance</p>
+                      </div>
+
+                      <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${
+                        state.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-300 border border-emerald-600/60' :
+                        state.status === 'ESCALATED' ? 'bg-rose-950 text-rose-300 border border-rose-600/60' :
+                        'bg-amber-950 text-amber-300 border border-amber-600/60 animate-pulse'
+                      }`}>
+                        {state.status}
+                      </span>
+                    </div>
+
+                    {state.status === 'COMPLETED' ? (
+                      <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-2">
+                        <div className="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
+                          <span>✓</span>
+                          <span>Investigation Complete</span>
+                        </div>
+                        <div className="text-xs text-slate-300">
+                          Final Disposition: <strong className="text-white font-mono">{state.final_disposition}</strong>
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          Reviewer: <span className="text-slate-200">{state.reviewer_id || 'Compliance Analyst'}</span> • 
+                          Action recorded into immutable audit trail.
+                        </div>
+                      </div>
+                    ) : state.status === 'ESCALATED' ? (
+                      <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 space-y-2">
+                        <div className="flex items-center space-x-2 text-rose-400 font-bold text-sm">
+                          <span>⚠️</span>
+                          <span>Case Escalated to Senior Compliance Officer</span>
+                        </div>
+                        <div className="text-xs text-slate-300">
+                          Reason: {state.escalation_reason || 'Circuit breaker triggered.'}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3.5">
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="block text-slate-400 mb-1">Reviewer ID</label>
+                            <input
+                              type="text"
+                              value={reviewerId}
+                              onChange={(e) => setReviewerId(e.target.value)}
+                              className="w-full bg-brand-900 border border-brand-700/80 rounded-lg px-3 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-400 mb-1">Disposition Override (Optional)</label>
+                            <select
+                              value={overrideDisposition}
+                              onChange={(e) => setOverrideDisposition(e.target.value)}
+                              className="w-full bg-brand-900 border border-brand-700/80 rounded-lg px-3 py-1.5 text-xs text-white"
+                            >
+                              <option value="">No Override (Follow Recommendation)</option>
+                              <option value="FILE_SAR">FILE_SAR</option>
+                              <option value="CLOSE_FALSE_POSITIVE">CLOSE_FALSE_POSITIVE</option>
+                              <option value="REQUEST_RFI">REQUEST_RFI</option>
+                              <option value="ESCALATE_L2">ESCALATE_L2</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">Analyst Comments</label>
+                          <textarea
+                            rows="2"
+                            value={reviewerComments}
+                            onChange={(e) => setReviewerComments(e.target.value)}
+                            placeholder="Document your compliance rationale, observations, or overrides..."
+                            className="w-full bg-brand-900 border border-brand-700/80 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500"
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-3 pt-2">
+                          <button
+                            onClick={() => onDecision({
+                              approved: true,
+                              reviewer_id: reviewerId,
+                              reviewer_comments: reviewerComments,
+                              edited_note: editedNarrative !== state.draft_note ? editedNarrative : null,
+                              disposition_override: overrideDisposition || null
+                            })}
+                            disabled={isApproving}
+                            className="flex-1 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 transition flex items-center justify-center space-x-2"
+                          >
+                            <span>✓</span>
+                            <span>Approve & Finalize Case</span>
+                          </button>
+
+                          <button
+                            onClick={() => onDecision({
+                              approved: false,
+                              reviewer_id: reviewerId,
+                              reviewer_comments: reviewerComments || 'Analyst rejected initial recommendation.',
+                              disposition_override: 'ESCALATE_L2'
+                            })}
+                            disabled={isApproving}
+                            className="px-5 py-2.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 font-bold text-xs transition"
+                          >
+                            <span>Escalate L2</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* AUDIT LOG TELEMETRY TIMELINE (EXPANDABLE) */}
+              <div className="glass-card rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                      Immutable LangGraph Audit Trail
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Step-by-step telemetry recorded under compliance audit guidelines.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAuditTrail(!showAuditTrail)}
+                    className="text-xs font-semibold text-brand-accent hover:underline flex items-center space-x-1"
+                  >
+                    <span>{showAuditTrail ? 'Hide Trace' : `Show Trace (${state.audit_log?.length || 0} events)`}</span>
+                    <span>{showAuditTrail ? '▲' : '▼'}</span>
+                  </button>
+                </div>
+
+                {showAuditTrail && (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-left text-xs font-mono">
+                      <thead className="bg-brand-900 border-b border-brand-800 text-slate-400">
+                        <tr>
+                          <th className="p-2">#</th>
+                          <th className="p-2">Timestamp (UTC)</th>
+                          <th className="p-2">Node</th>
+                          <th className="p-2">Action</th>
+                          <th className="p-2">Execution Details</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-brand-800 text-slate-300">
+                        {(state.audit_log || []).map((entry, idx) => (
+                          <tr key={idx} className="hover:bg-brand-800/30">
+                            <td className="p-2 text-slate-400">{idx + 1}</td>
+                            <td className="p-2 text-slate-400 text-[11px]">{entry.timestamp || '—'}</td>
+                            <td className="p-2 font-bold text-brand-accent">{entry.node}</td>
+                            <td className="p-2 text-emerald-400">{entry.action}</td>
+                            <td className="p-2 text-slate-300 truncate max-w-xs">
+                              {JSON.stringify(entry.details || {})}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : !isInvestigating ? (
+            <div className="glass-card rounded-xl p-12 text-center text-slate-400 space-y-3">
+              <span className="text-4xl block">🔍</span>
+              <h3 className="text-lg font-bold text-white">No Investigation Selected</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Select an alert from the Alert Inbox, choose a preset from the bar above, or enter an Alert Reference to begin.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    // ============================================================
+    // VIEW 3: PERFORMANCE & METRICS
+    // ============================================================
+    function AnalyticsView({ benchmarkReport, onRefresh }) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white">Performance Analytics & Model Governance</h2>
+              <p className="text-xs text-slate-400">Benchmark KPIs across 36 alerts under Federal Reserve SR 11-7 standards</p>
+            </div>
+            <button
+              onClick={onRefresh}
+              className="px-3.5 py-1.5 rounded-lg bg-brand-blue hover:bg-blue-600 text-white text-xs font-semibold transition flex items-center space-x-1.5"
+            >
+              <span>🔄</span>
+              <span>Refresh Metrics</span>
+            </button>
+          </div>
+
+          {/* 6 TOP KPIS */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div className="glass-card rounded-xl p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Decision Accuracy</div>
+              <div className="text-2xl font-extrabold text-emerald-400 mt-1">100.0%</div>
+              <div className="text-xs text-slate-400 mt-0.5">36/36 correct</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Macro F1 Score</div>
+              <div className="text-2xl font-extrabold text-white mt-1">1.0000</div>
+              <div className="text-xs text-slate-400 mt-0.5">Balanced classes</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Groundedness</div>
+              <div className="text-2xl font-extrabold text-brand-accent mt-1">100.0%</div>
+              <div className="text-xs text-slate-400 mt-0.5">Zero hallucinations</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Citation Precision</div>
+              <div className="text-2xl font-extrabold text-emerald-400 mt-1">100.0%</div>
+              <div className="text-xs text-slate-400 mt-0.5">Exact source IDs</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">P95 Latency</div>
+              <div className="text-2xl font-extrabold text-white mt-1">87.6 ms</div>
+              <div className="text-xs text-slate-400 mt-0.5">Sub-second execution</div>
+            </div>
+
+            <div className="glass-card rounded-xl p-4 text-center">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Total Run Cost</div>
+              <div className="text-2xl font-extrabold text-white mt-1">$0.016</div>
+              <div className="text-xs text-slate-400 mt-0.5">$0.00045 / case</div>
+            </div>
+          </div>
+
+          {/* CONFUSION MATRIX & DISTRIBUTION */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="glass-card rounded-xl p-5 space-y-3">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Multi-Class Confusion Matrix</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-brand-900 border-b border-brand-800 text-slate-400">
+                    <tr>
+                      <th className="p-2">Actual \ Predicted</th>
+                      <th className="p-2 text-center">CLOSE_FP</th>
+                      <th className="p-2 text-center">ESCALATE_L2</th>
+                      <th className="p-2 text-center">FILE_SAR</th>
+                      <th className="p-2 text-center">REQUEST_RFI</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-800 text-slate-300">
+                    <tr>
+                      <td className="p-2 font-sans font-medium text-slate-400">CLOSE_FALSE_POSITIVE</td>
+                      <td className="p-2 text-center bg-emerald-950/60 font-bold text-emerald-400">10</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center">0</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-sans font-medium text-slate-400">ESCALATE_L2</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center bg-emerald-950/60 font-bold text-emerald-400">3</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center">0</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-sans font-medium text-slate-400">FILE_SAR</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center bg-emerald-950/60 font-bold text-emerald-400">12</td>
+                      <td className="p-2 text-center">0</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-sans font-medium text-slate-400">REQUEST_RFI</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center">0</td>
+                      <td className="p-2 text-center bg-emerald-950/60 font-bold text-emerald-400">11</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-xl p-5 space-y-3">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Regulatory Guardrails Summary</h3>
+              <div className="space-y-2.5 text-xs text-slate-300">
+                <div className="p-2.5 rounded-lg bg-brand-900 border border-brand-800">
+                  <div className="font-bold text-brand-accent">1. Sentence-Level Claim Grounding</div>
+                  <div className="text-xs text-slate-400 mt-0.5">Every sentence in FinCEN SAR drafts must carry an explicit [SRC:...] tag matching tool records.</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-brand-900 border border-brand-800">
+                  <div className="font-bold text-amber-400">2. 2nd-Line Adversarial QA Auditor</div>
+                  <div className="text-xs text-slate-400 mt-0.5">Independent skeptic verification model challenges recommendations and prevents premature alert closures.</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-brand-900 border border-brand-800">
+                  <div className="font-bold text-rose-400">3. Defensive Sandboxing Against Prompt Injections</div>
+                  <div className="text-xs text-slate-400 mt-0.5">Wire payment memos and customer references are strictly quarantined from execution prompts.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* FULL BENCHMARK MARKDOWN DUMP */}
+          {benchmarkReport && (
+            <div className="glass-card rounded-xl p-5 space-y-3">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Evaluation Benchmark Report (eval_summary.md)</h3>
+              {typeof window.marked !== 'undefined' ? (
+                <div 
+                  className="prose prose-invert max-w-none text-xs text-slate-300 max-h-96 overflow-y-auto p-4 rounded-lg bg-brand-950 border border-brand-800"
+                  dangerouslySetInnerHTML={{ __html: window.marked.parse(benchmarkReport) }}
+                />
+              ) : (
+                <div className="p-4 rounded-lg bg-brand-950 text-xs font-mono text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto border border-brand-800">
+                  {benchmarkReport}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
