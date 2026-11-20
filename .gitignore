@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 eval/reports/*
 !eval/reports/.gitkeep
+!eval/reports/eval_summary.md
 chroma_db/
 .venv/
 
